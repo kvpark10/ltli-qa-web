@@ -10,32 +10,92 @@ from docx import Document
 st.set_page_config(
     page_title="LTLI QA",
     page_icon="🔎",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-st.title("🔎 LTLI QA")
-st.subheader("Localization Quality Assurance")
-
-st.info(
-    "Public Beta · Free translation QA for XLSX, DOCX, and TXT files"
-)
-
-st.write(
+st.markdown(
     """
-    Upload one bilingual XLSX file, or upload separate source and target
-    DOCX/TXT files.
-    """
+    <style>
+    :root {
+        --ltli-navy: #10223d;
+        --ltli-cobalt: #3157e2;
+        --ltli-violet: #7c4dff;
+        --ltli-cyan: #25b6d2;
+        --ltli-surface: #f6f8ff;
+        --ltli-line: #e3e8f5;
+    }
+    .stApp {
+        background:
+            radial-gradient(circle at 92% 5%, rgba(124,77,255,.10), transparent 25rem),
+            radial-gradient(circle at 3% 25%, rgba(37,182,210,.08), transparent 24rem),
+            #fbfcff;
+        color: var(--ltli-navy);
+    }
+    .block-container {max-width: 1180px; padding-top: 2rem; padding-bottom: 4rem;}
+    .ltli-hero {
+        position: relative; overflow: hidden; padding: 2.25rem 2.4rem;
+        border: 1px solid rgba(255,255,255,.65); border-radius: 28px;
+        background: linear-gradient(125deg, #142d62 0%, #365ce7 55%, #7c4dff 100%);
+        color: white; box-shadow: 0 18px 50px rgba(49,87,226,.20);
+        margin-bottom: 1.25rem;
+    }
+    .ltli-hero:after {
+        content: ""; position: absolute; width: 270px; height: 270px;
+        border-radius: 50%; right: -70px; top: -120px;
+        background: rgba(255,255,255,.12);
+    }
+    .ltli-brand {font-size: .82rem; font-weight: 750; letter-spacing: .16em; opacity: .78;}
+    .ltli-hero h1 {font-size: clamp(2rem, 4vw, 3.35rem); line-height: 1.05; margin: .65rem 0 .75rem; color: white;}
+    .ltli-hero p {font-size: 1.05rem; max-width: 690px; opacity: .92; margin: 0;}
+    .ltli-badges {display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.35rem;}
+    .ltli-badge {padding:.42rem .72rem; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); font-size:.78rem;}
+    .ltli-steps {display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin:1rem 0 1.7rem;}
+    .ltli-step {background:white; border:1px solid var(--ltli-line); border-radius:16px; padding:.85rem 1rem; box-shadow:0 6px 18px rgba(16,34,61,.045);}
+    .ltli-step strong {display:block; font-size:.86rem; color:var(--ltli-cobalt); margin-bottom:.15rem;}
+    .ltli-step span {font-size:.82rem; color:#63708a;}
+    .ltli-section {font-size:1.35rem; font-weight:760; color:var(--ltli-navy); margin:1.6rem 0 .25rem;}
+    div[data-testid="stFileUploader"] {background:white; border:1px solid var(--ltli-line); border-radius:18px; padding:1rem 1rem .45rem; box-shadow:0 8px 24px rgba(16,34,61,.05);}
+    div[data-testid="stFileUploaderDropzone"] {background:var(--ltli-surface); border:1.5px dashed #b9c5e9; border-radius:14px;}
+    div[data-testid="stMetric"] {background:white; border:1px solid var(--ltli-line); border-radius:16px; padding:1rem; box-shadow:0 6px 20px rgba(16,34,61,.05);}
+    div[data-testid="stMetricValue"] {color:var(--ltli-cobalt);}
+    div[data-baseweb="tab-list"] {gap:.35rem; background:#eef2ff; padding:.3rem; border-radius:14px;}
+    button[data-baseweb="tab"] {border-radius:10px;}
+    .stButton > button[kind="primary"], .stDownloadButton > button {
+        min-height:3rem; border-radius:12px; font-weight:700; border:0;
+        box-shadow:0 8px 20px rgba(49,87,226,.18);
+    }
+    .ltli-footer {text-align:center; color:#748098; font-size:.78rem; margin-top:2.5rem;}
+    @media (max-width: 700px) {
+        .block-container {padding-top:1rem;}
+        .ltli-hero {padding:1.6rem 1.3rem; border-radius:22px;}
+        .ltli-steps {grid-template-columns:1fr;}
+    }
+    </style>
+    <section class="ltli-hero">
+      <div class="ltli-brand">LANGUAGE TECHNOLOGY LOCALIZATION INSTITUTE</div>
+      <h1>Translation QA,<br>made clear.</h1>
+      <p>Find consistency issues across bilingual files in seconds—and export a practical report your team can act on.</p>
+      <div class="ltli-badges">
+        <span class="ltli-badge">Public beta</span><span class="ltli-badge">Free to use</span>
+        <span class="ltli-badge">XLSX · DOCX · TXT</span><span class="ltli-badge">No account required</span>
+      </div>
+    </section>
+    <div class="ltli-steps">
+      <div class="ltli-step"><strong>01 · Add your files</strong><span>Upload bilingual XLSX or an aligned file pair.</span></div>
+      <div class="ltli-step"><strong>02 · Run 15 checks</strong><span>Review numbers, tags, terms, spacing, and more.</span></div>
+      <div class="ltli-step"><strong>03 · Export results</strong><span>Download a shareable Excel QA report.</span></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
-st.warning(
-    "For the initial beta, upload public test data only. Do not upload "
-    "personal information, customer-confidential files, diplomatic documents, "
-    "or unpublished commercial content. Maximum file size: 10 MB."
-)
-
-st.caption(
-    "Questions or feedback: contact@ltli.kr · Website: https://ltli.kr"
-)
+with st.expander("🔒 Before you upload — beta data policy", expanded=False):
+    st.warning(
+        "Use public test data only. Do not upload personal information, customer-confidential "
+        "files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB."
+    )
+    st.caption("Questions or feedback: contact@ltli.kr · Website: https://ltli.kr")
 
 
 # --------------------------------------------------
@@ -767,53 +827,51 @@ def convert_dataframe_to_excel(dataframe):
 # --------------------------------------------------
 # 파일 업로드
 # --------------------------------------------------
-input_mode = st.radio(
-    "Input method",
-    options=["Bilingual XLSX", "Separate source and target files"],
-    horizontal=True,
-)
+st.markdown('<div class="ltli-section">1. Add files</div>', unsafe_allow_html=True)
+st.caption("Choose the input format that matches your translation workflow.")
+
+xlsx_tab, paired_tab = st.tabs(["📊 Bilingual XLSX", "📄 Separate DOCX / TXT"])
 
 uploaded_file = None
 source_file = None
 target_file = None
 
-if input_mode == "Bilingual XLSX":
+with xlsx_tab:
     uploaded_file = st.file_uploader(
-        "Choose a bilingual XLSX file",
+        "Drop a bilingual spreadsheet here",
         type=["xlsx"],
-        help="Required columns: Source and Target",
+        help="The spreadsheet needs exactly one Source column and one Target column.",
+        key="bilingual_xlsx_uploader",
     )
-else:
-    source_column, target_column = st.columns(2)
+    st.caption("Required columns: Source and Target · Maximum 10 MB")
 
+with paired_tab:
+    source_column, target_column = st.columns(2)
     with source_column:
         source_file = st.file_uploader(
-            "Upload source file",
-            type=["docx", "txt"],
-            key="source_document_uploader",
+            "Source file", type=["docx", "txt"], key="source_document_uploader"
         )
-
     with target_column:
         target_file = st.file_uploader(
-            "Upload target file",
-            type=["docx", "txt"],
-            key="target_document_uploader",
+            "Target file", type=["docx", "txt"], key="target_document_uploader"
         )
-
     st.caption(
-        "DOCX files are aligned by non-empty paragraph; TXT files are aligned "
-        "by non-empty line. Both files must contain the same number of units."
+        "Use two files of the same type. DOCX is aligned by non-empty paragraph; "
+        "TXT is aligned by non-empty line."
     )
 
-glossary_file = st.file_uploader(
-    "Upload terminology glossary (optional)",
-    type=["csv", "xlsx"],
-    key="glossary_uploader",
-    help=(
-        "Required columns: Source Term/Target Term or "
-        "source_term/target_term"
+if uploaded_file is not None:
+    input_mode = "Bilingual XLSX"
+elif source_file is not None or target_file is not None:
+    input_mode = "Separate source and target files"
+else:
+    input_mode = None
+
+with st.expander("＋ Add a terminology glossary (optional)"):
+    glossary_file = st.file_uploader(
+        "Glossary file", type=["csv", "xlsx"], key="glossary_uploader",
+        help="Columns: Source Term and Target Term (space, underscore, and case variations accepted)."
     )
-)
 
 glossary_entries = []
 
@@ -830,7 +888,10 @@ if glossary_file is not None:
 
 alignment_metadata = None
 
-if input_mode == "Bilingual XLSX":
+if input_mode is None:
+    st.info("Choose a tab above and upload your file(s) to begin.", icon="👆")
+    st.stop()
+elif input_mode == "Bilingual XLSX":
     if uploaded_file is None:
         st.info("Please upload a bilingual XLSX file.")
         st.stop()
@@ -887,7 +948,8 @@ except ValueError as error:
 # --------------------------------------------------
 # 파일 미리보기
 # --------------------------------------------------
-st.subheader("File Preview")
+st.markdown('<div class="ltli-section">2. Review and run QA</div>', unsafe_allow_html=True)
+st.caption(f"{len(dataframe):,} aligned segment(s) are ready. Confirm the preview, then start the check.")
 
 st.dataframe(
     dataframe,
@@ -895,13 +957,16 @@ st.dataframe(
     hide_index=True
 )
 
-st.divider()
-
+run_column, detail_column = st.columns([1, 2])
+with run_column:
+    run_requested = st.button("Run QA checks  →", type="primary", use_container_width=True)
+with detail_column:
+    st.caption("Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology.")
 
 # --------------------------------------------------
 # QA 실행
 # --------------------------------------------------
-if st.button("Run QA", type="primary"):
+if run_requested:
     result_dataframe = dataframe.copy()
 
     result_dataframe["QA Issues"] = (
@@ -943,10 +1008,14 @@ if st.button("Run QA", type="primary"):
         else 0
     )
 
+    st.session_state["qa_result_dataframe"] = result_dataframe
+    st.session_state["qa_error_dataframe"] = error_dataframe
+    st.session_state["qa_issue_summary"] = issue_summary if "issue_summary" in locals() else None
+
     # --------------------------------------------------
     # 요약
     # --------------------------------------------------
-    st.subheader("QA Summary")
+    st.markdown('<div class="ltli-section">3. QA results</div>', unsafe_allow_html=True)
 
     column1, column2, column3, column4 = st.columns(4)
 
@@ -991,7 +1060,7 @@ if st.button("Run QA", type="primary"):
         }
     )
 
-    st.subheader("Issue Summary")
+    st.markdown("#### Issue overview")
 
     st.dataframe(
         issue_summary,
@@ -1002,7 +1071,7 @@ if st.button("Run QA", type="primary"):
     # --------------------------------------------------
     # 전체 결과
     # --------------------------------------------------
-    st.subheader("QA Results")
+    st.markdown("#### All segments")
 
     st.dataframe(
         result_dataframe,
@@ -1018,7 +1087,7 @@ if st.button("Run QA", type="primary"):
             f"{error_count} segment(s) contain QA issues."
         )
 
-        st.subheader("Errors Only")
+        st.markdown("#### Issues requiring review")
 
         st.dataframe(
             error_dataframe,
@@ -1037,11 +1106,18 @@ if st.button("Run QA", type="primary"):
     )
 
     st.download_button(
-        label="Download QA Results",
+        label="Download Excel report  ↓",
         data=excel_data,
         file_name="ltli_qa_results.xlsx",
         mime=(
             "application/vnd.openxmlformats-officedocument."
             "spreadsheetml.sheet"
-        )
+        ),
+        use_container_width=True,
     )
+
+st.markdown(
+    '<div class="ltli-footer">LTLI QA Public Beta · Built for translators, reviewers, and localization teams · '
+    '<a href="mailto:contact@ltli.kr">contact@ltli.kr</a></div>',
+    unsafe_allow_html=True,
+)
