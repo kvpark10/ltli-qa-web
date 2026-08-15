@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import urllib.error
 import urllib.parse
@@ -15,6 +16,37 @@ st.set_page_config(page_title="LTLI QA Beta Dashboard", page_icon="📊", layout
 
 st.title("LTLI QA Beta Dashboard")
 st.caption("Private, read-only view of anonymous QA usage and beta feedback.")
+
+
+def require_admin_login() -> None:
+    """Stop before any database call unless the administrator is authenticated."""
+    try:
+        expected_password = str(st.secrets["ADMIN_PASSWORD"])
+    except (KeyError, FileNotFoundError):
+        st.error("Administrator login is not configured.")
+        st.stop()
+
+    if st.session_state.get("admin_authenticated"):
+        with st.sidebar:
+            st.success("Administrator signed in")
+            if st.button("Sign out"):
+                st.session_state["admin_authenticated"] = False
+                st.rerun()
+        return
+
+    with st.form("admin_login"):
+        supplied_password = st.text_input("Administrator password", type="password")
+        submitted = st.form_submit_button("Sign in", type="primary")
+
+    if submitted:
+        if hmac.compare_digest(supplied_password, expected_password):
+            st.session_state["admin_authenticated"] = True
+            st.rerun()
+        st.error("Incorrect administrator password.")
+    st.stop()
+
+
+require_admin_login()
 
 
 def _settings() -> tuple[str, str]:
