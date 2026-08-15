@@ -27,7 +27,7 @@ LANGUAGE = {
         "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "15개 검사 실행", "step2_text": "숫자, 태그, 용어, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
         "policy": "🔒 업로드 전 확인 — 베타 데이터 정책", "policy_text": "공개용 테스트 자료만 사용하세요. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
         "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
-        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.",
+        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.", "drop_xlsx": "이중언어 스프레드시트를 업로드하세요", "required_columns": "필수 열: Source 및 Target · 최대 10MB", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.", "glossary": "＋ 용어집 추가(선택)", "glossary_file": "용어집 파일",
         "review": "2. 미리보기 및 QA 실행", "ready": "개의 정렬된 세그먼트가 준비되었습니다. 미리보기를 확인한 후 검사를 시작하세요.", "run": "QA 검사 실행 →", "results": "3. QA 결과", "overview": "#### 오류 요약", "all_segments": "#### 전체 세그먼트", "review_issues": "#### 검토가 필요한 오류", "no_issues": "QA 오류가 발견되지 않았습니다.", "download": "Excel 보고서 다운로드 ↓",
     },
     "en": {}
@@ -157,10 +157,12 @@ with st.sidebar:
         option_ko = {"Yes":"예", "Partly":"일부 도움", "No":"아니요", "Not yet tested":"아직 테스트하지 않음", "None":"없음", "A few":"약간", "Many":"많음", "Not sure":"잘 모르겠음", "Maybe":"아마도"}
         helpfulness = st.radio(L("helpful", "Did the results help with actual review?"), ["Yes", "Partly", "No", "Not yet tested"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
         false_positive_level = st.radio(L("false_positive", "How many false positives did you notice?"), ["None", "A few", "Many", "Not sure"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
-        most_useful_rule = st.selectbox(L("useful", "Most useful check"), ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"])
+        useful_ko = {"Missing translation":"미번역", "Identical source/target":"원문·번역문 동일", "Numbers":"숫자", "Punctuation":"구두점", "Tags/placeholders":"태그·자리표시자", "Brackets":"괄호", "URLs/emails":"URL·이메일", "Whitespace":"공백", "Filenames/shortcuts/units":"파일명·단축키·단위", "Terminology":"용어"}
+        most_useful_rule = st.selectbox(L("useful", "Most useful check"), ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"], format_func=lambda value: useful_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
         requested_features = st.text_area(L("features", "Features you would like"), max_chars=1000)
         reuse_intent = st.radio(L("reuse", "Would you use LTLI QA again?"), ["Yes", "Maybe", "No"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
-        job_group = st.selectbox(L("role", "Role (optional)"), ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"])
+        role_ko = {"Translator":"번역사", "Reviewer":"검수자", "Localization PM":"현지화 PM", "Translation company":"번역회사", "Student/educator":"학생·교육자", "Other":"기타"}
+        job_group = st.selectbox(L("role", "Role (optional)"), ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"], format_func=lambda value: role_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
         comments = st.text_area(L("comments", "Other comments (optional)"), max_chars=2000)
         interview_email = st.text_input(L("interview", "Email for a follow-up interview (optional)"), max_chars=254)
         email_consent = st.checkbox(L("consent", "I consent to LTLI storing this email solely to contact me about the beta interview."))
@@ -921,26 +923,25 @@ target_file = None
 
 with xlsx_tab:
     uploaded_file = st.file_uploader(
-        "Drop a bilingual spreadsheet here",
+        L("drop_xlsx", "Drop a bilingual spreadsheet here"),
         type=["xlsx"],
         help="The spreadsheet needs exactly one Source column and one Target column.",
         key="bilingual_xlsx_uploader",
     )
-    st.caption("Required columns: Source and Target · Maximum 10 MB")
+    st.caption(L("required_columns", "Required columns: Source and Target · Maximum 10 MB"))
 
 with paired_tab:
     source_column, target_column = st.columns(2)
     with source_column:
         source_file = st.file_uploader(
-            "Source file", type=["docx", "txt"], key="source_document_uploader"
+            L("source_file", "Source file"), type=["docx", "txt"], key="source_document_uploader"
         )
     with target_column:
         target_file = st.file_uploader(
-            "Target file", type=["docx", "txt"], key="target_document_uploader"
+            L("target_file", "Target file"), type=["docx", "txt"], key="target_document_uploader"
         )
     st.caption(
-        "Use two files of the same type. DOCX is aligned by non-empty paragraph; "
-        "TXT is aligned by non-empty line."
+        L("pair_help", "Use two files of the same type. DOCX is aligned by non-empty paragraph; TXT is aligned by non-empty line.")
     )
 
 if uploaded_file is not None:
@@ -950,9 +951,9 @@ elif source_file is not None or target_file is not None:
 else:
     input_mode = None
 
-with st.expander("＋ Add a terminology glossary (optional)"):
+with st.expander(L("glossary", "＋ Add a terminology glossary (optional)")):
     glossary_file = st.file_uploader(
-        "Glossary file", type=["csv", "xlsx"], key="glossary_uploader",
+        L("glossary_file", "Glossary file"), type=["csv", "xlsx"], key="glossary_uploader",
         help="Columns: Source Term and Target Term (space, underscore, and case variations accepted)."
     )
 
