@@ -20,7 +20,42 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.markdown(
+LANGUAGE = {
+    "ko": {
+        "hero_title": "번역 QA,<br>더 명확하게.", "hero_text": "이중언어 파일의 일관성 문제를 몇 초 안에 찾고, 팀이 바로 활용할 수 있는 보고서를 만드세요.",
+        "public_beta": "공개 베타", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
+        "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "15개 검사 실행", "step2_text": "숫자, 태그, 용어, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
+        "policy": "🔒 업로드 전 확인 — 베타 데이터 정책", "policy_text": "공개용 테스트 자료만 사용하세요. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
+        "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
+        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.",
+        "review": "2. 미리보기 및 QA 실행", "ready": "개의 정렬된 세그먼트가 준비되었습니다. 미리보기를 확인한 후 검사를 시작하세요.", "run": "QA 검사 실행 →", "results": "3. QA 결과", "overview": "#### 오류 요약", "all_segments": "#### 전체 세그먼트", "review_issues": "#### 검토가 필요한 오류", "no_issues": "QA 오류가 발견되지 않았습니다.", "download": "Excel 보고서 다운로드 ↓",
+    },
+    "en": {}
+}
+
+query_language = str(st.query_params.get("lang", "")).lower()
+try:
+    browser_language = str(getattr(st.context, "locale", "en")).lower()
+except (AttributeError, RuntimeError):
+    browser_language = "en"
+detected_language = query_language if query_language in {"ko", "en"} else ("ko" if browser_language.startswith("ko") else "en")
+if "ui_language" not in st.session_state:
+    st.session_state["ui_language"] = detected_language
+
+language_labels = {"한국어": "ko", "English": "en"}
+selected_label = st.selectbox("Language / 언어", list(language_labels), index=0 if st.session_state["ui_language"] == "ko" else 1)
+selected_language = language_labels[selected_label]
+if selected_language != st.session_state["ui_language"]:
+    st.session_state["ui_language"] = selected_language
+    st.query_params["lang"] = selected_language
+    st.rerun()
+
+UI_LANGUAGE = st.session_state["ui_language"]
+
+def L(key, english):
+    return LANGUAGE.get(UI_LANGUAGE, {}).get(key, english)
+
+hero_html = (
     """
     <style>
     :root {
@@ -93,34 +128,44 @@ st.markdown(
       <div class="ltli-step"><strong>03 · Export results</strong><span>Download a shareable Excel QA report.</span></div>
     </div>
     """,
-    unsafe_allow_html=True,
 )
+hero_html = hero_html[0]
+for source, target in {
+    "Translation QA,<br>made clear.": L("hero_title", "Translation QA,<br>made clear."),
+    "Find consistency issues across bilingual files in seconds—and export a practical report your team can act on.": L("hero_text", "Find consistency issues across bilingual files in seconds—and export a practical report your team can act on."),
+    "Public beta": L("public_beta", "Public beta"), "Free to use": L("free", "Free to use"), "No account required": L("no_account", "No account required"),
+    "Add your files": L("step1", "Add your files"), "Upload bilingual XLSX or an aligned file pair.": L("step1_text", "Upload bilingual XLSX or an aligned file pair."),
+    "Run 15 checks": L("step2", "Run 15 checks"), "Review numbers, tags, terms, spacing, and more.": L("step2_text", "Review numbers, tags, terms, spacing, and more."),
+    "Export results": L("step3", "Export results"), "Download a shareable Excel QA report.": L("step3_text", "Download a shareable Excel QA report."),
+}.items():
+    hero_html = hero_html.replace(source, target)
+st.markdown(hero_html, unsafe_allow_html=True)
 
-with st.expander("🔒 Before you upload — beta data policy", expanded=False):
+with st.expander(L("policy", "🔒 Before you upload — beta data policy"), expanded=False):
     st.warning(
-        "Use public test data only. Do not upload personal information, customer-confidential "
-        "files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB."
+        L("policy_text", "Use public test data only. Do not upload personal information, customer-confidential files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB.")
     )
     st.caption("Questions or feedback: contact@ltli.kr · Website: https://ltli.kr")
 
 track_once("session_started", "session_started", {"app_version": APP_VERSION})
 
 with st.sidebar:
-    st.header("Beta feedback")
-    st.caption("Your feedback helps us improve LTLI QA. It can be submitted at any time.")
+    st.header(L("feedback", "Beta feedback"))
+    st.caption(L("feedback_intro", "Your feedback helps us improve LTLI QA. It can be submitted at any time."))
     with st.form("beta_feedback_form", clear_on_submit=True):
-        satisfaction = st.slider("Overall satisfaction", 1, 5, 4)
-        helpfulness = st.radio("Did the results help with actual review?", ["Yes", "Partly", "No", "Not yet tested"])
-        false_positive_level = st.radio("How many false positives did you notice?", ["None", "A few", "Many", "Not sure"])
-        most_useful_rule = st.selectbox("Most useful check", ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"])
-        requested_features = st.text_area("Features you would like", max_chars=1000)
-        reuse_intent = st.radio("Would you use LTLI QA again?", ["Yes", "Maybe", "No"])
-        job_group = st.selectbox("Role (optional)", ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"])
-        comments = st.text_area("Other comments (optional)", max_chars=2000)
-        interview_email = st.text_input("Email for a follow-up interview (optional)", max_chars=254)
-        email_consent = st.checkbox("I consent to LTLI storing this email solely to contact me about the beta interview.")
-        st.caption("Anonymous feedback uses a random session ID. Do not enter personal, client-confidential, diplomatic, or unpublished information in free-text fields. Optional email is stored separately from usage events.")
-        feedback_requested = st.form_submit_button("Send feedback", use_container_width=True)
+        satisfaction = st.slider(L("satisfaction", "Overall satisfaction"), 1, 5, 4)
+        option_ko = {"Yes":"예", "Partly":"일부 도움", "No":"아니요", "Not yet tested":"아직 테스트하지 않음", "None":"없음", "A few":"약간", "Many":"많음", "Not sure":"잘 모르겠음", "Maybe":"아마도"}
+        helpfulness = st.radio(L("helpful", "Did the results help with actual review?"), ["Yes", "Partly", "No", "Not yet tested"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
+        false_positive_level = st.radio(L("false_positive", "How many false positives did you notice?"), ["None", "A few", "Many", "Not sure"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
+        most_useful_rule = st.selectbox(L("useful", "Most useful check"), ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"])
+        requested_features = st.text_area(L("features", "Features you would like"), max_chars=1000)
+        reuse_intent = st.radio(L("reuse", "Would you use LTLI QA again?"), ["Yes", "Maybe", "No"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value)
+        job_group = st.selectbox(L("role", "Role (optional)"), ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"])
+        comments = st.text_area(L("comments", "Other comments (optional)"), max_chars=2000)
+        interview_email = st.text_input(L("interview", "Email for a follow-up interview (optional)"), max_chars=254)
+        email_consent = st.checkbox(L("consent", "I consent to LTLI storing this email solely to contact me about the beta interview."))
+        st.caption(L("privacy_caption", "Anonymous feedback uses a random session ID. Do not enter personal, client-confidential, diplomatic, or unpublished information in free-text fields. Optional email is stored separately from usage events."))
+        feedback_requested = st.form_submit_button(L("send", "Send feedback"), use_container_width=True)
 
     if feedback_requested:
         normalized_email = interview_email.strip()
@@ -129,7 +174,7 @@ with st.sidebar:
         elif normalized_email and not email_consent:
             st.error("Please check the consent box to submit an interview email.")
         elif submit_feedback({"satisfaction": satisfaction, "helpfulness": helpfulness, "false_positive_level": false_positive_level, "most_useful_rule": most_useful_rule, "requested_features": requested_features.strip(), "reuse_intent": reuse_intent, "job_group": job_group, "comments": comments.strip()}, normalized_email if email_consent else ""):
-            st.success("Thank you. Your feedback was submitted.")
+            st.success(L("thanks", "Thank you. Your feedback was submitted."))
         elif not telemetry_enabled():
             st.warning("Feedback storage is not configured yet. Please contact contact@ltli.kr.")
         else:
@@ -865,10 +910,10 @@ def convert_dataframe_to_excel(dataframe):
 # --------------------------------------------------
 # 파일 업로드
 # --------------------------------------------------
-st.markdown('<div class="ltli-section">1. Add files</div>', unsafe_allow_html=True)
-st.caption("Choose the input format that matches your translation workflow.")
+st.markdown(f'<div class="ltli-section">{L("add_files", "1. Add files")}</div>', unsafe_allow_html=True)
+st.caption(L("choose_format", "Choose the input format that matches your translation workflow."))
 
-xlsx_tab, paired_tab = st.tabs(["📊 Bilingual XLSX", "📄 Separate DOCX / TXT"])
+xlsx_tab, paired_tab = st.tabs([L("xlsx_tab", "📊 Bilingual XLSX"), L("pair_tab", "📄 Separate DOCX / TXT")])
 
 uploaded_file = None
 source_file = None
@@ -927,7 +972,7 @@ if glossary_file is not None:
 alignment_metadata = None
 
 if input_mode is None:
-    st.info("Choose a tab above and upload your file(s) to begin.", icon="👆")
+    st.info(L("begin", "Choose a tab above and upload your file(s) to begin."), icon="👆")
     st.stop()
 elif input_mode == "Bilingual XLSX":
     if uploaded_file is None:
@@ -1007,8 +1052,8 @@ track_once(
 # --------------------------------------------------
 # 파일 미리보기
 # --------------------------------------------------
-st.markdown('<div class="ltli-section">2. Review and run QA</div>', unsafe_allow_html=True)
-st.caption(f"{len(dataframe):,} aligned segment(s) are ready. Confirm the preview, then start the check.")
+st.markdown(f'<div class="ltli-section">{L("review", "2. Review and run QA")}</div>', unsafe_allow_html=True)
+st.caption(f"{len(dataframe):,}{L('ready', ' aligned segment(s) are ready. Confirm the preview, then start the check.')}")
 
 st.dataframe(
     dataframe,
@@ -1018,7 +1063,7 @@ st.dataframe(
 
 run_column, detail_column = st.columns([1, 2])
 with run_column:
-    run_requested = st.button("Run QA checks  →", type="primary", use_container_width=True)
+    run_requested = st.button(L("run", "Run QA checks  →"), type="primary", use_container_width=True)
 with detail_column:
     st.caption("Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology.")
 
@@ -1088,28 +1133,28 @@ if "qa_result_dataframe" in st.session_state:
     pass_count = total_segments - error_count
     pass_rate = pass_count / total_segments * 100 if total_segments else 0
 
-    st.markdown('<div class="ltli-section">3. QA results</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ltli-section">{L("results", "3. QA results")}</div>', unsafe_allow_html=True)
     column1, column2, column3, column4 = st.columns(4)
     column1.metric("Total Segments", total_segments)
     column2.metric("Passed", pass_count)
     column3.metric("Errors", error_count)
     column4.metric("Pass Rate", f"{pass_rate:.1f}%")
-    st.markdown("#### Issue overview")
+    st.markdown(L("overview", "#### Issue overview"))
     st.dataframe(issue_summary, use_container_width=True, hide_index=True)
-    st.markdown("#### All segments")
+    st.markdown(L("all_segments", "#### All segments"))
     st.dataframe(result_dataframe, use_container_width=True, hide_index=True)
     if error_count:
         st.error(f"{error_count} segment(s) contain QA issues.")
-        st.markdown("#### Issues requiring review")
+        st.markdown(L("review_issues", "#### Issues requiring review"))
         st.dataframe(error_dataframe, use_container_width=True, hide_index=True)
     else:
-        st.success("No QA issues were found.")
+        st.success(L("no_issues", "No QA issues were found."))
 
     def record_report_download():
         track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
 
     st.download_button(
-        label="Download Excel report  ↓",
+        label=L("download", "Download Excel report  ↓"),
         data=convert_dataframe_to_excel(result_dataframe),
         file_name="ltli_qa_results.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
