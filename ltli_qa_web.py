@@ -1,10 +1,16 @@
 import io
 import re
+import time
 from collections import Counter
 
 import pandas as pd
 import streamlit as st
 from docx import Document
+
+from telemetry import (
+    APP_VERSION, elapsed_milliseconds, file_size_bucket, submit_feedback,
+    telemetry_enabled, track_event, track_once,
+)
 
 
 st.set_page_config(
@@ -96,6 +102,38 @@ with st.expander("🔒 Before you upload — beta data policy", expanded=False):
         "files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB."
     )
     st.caption("Questions or feedback: contact@ltli.kr · Website: https://ltli.kr")
+
+track_once("session_started", "session_started", {"app_version": APP_VERSION})
+
+with st.sidebar:
+    st.header("Beta feedback")
+    st.caption("Your feedback helps us improve LTLI QA. It can be submitted at any time.")
+    with st.form("beta_feedback_form", clear_on_submit=True):
+        satisfaction = st.slider("Overall satisfaction", 1, 5, 4)
+        helpfulness = st.radio("Did the results help with actual review?", ["Yes", "Partly", "No", "Not yet tested"])
+        false_positive_level = st.radio("How many false positives did you notice?", ["None", "A few", "Many", "Not sure"])
+        most_useful_rule = st.selectbox("Most useful check", ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"])
+        requested_features = st.text_area("Features you would like", max_chars=1000)
+        reuse_intent = st.radio("Would you use LTLI QA again?", ["Yes", "Maybe", "No"])
+        job_group = st.selectbox("Role (optional)", ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"])
+        comments = st.text_area("Other comments (optional)", max_chars=2000)
+        interview_email = st.text_input("Email for a follow-up interview (optional)", max_chars=254)
+        email_consent = st.checkbox("I consent to LTLI storing this email solely to contact me about the beta interview.")
+        st.caption("Anonymous feedback uses a random session ID. Do not enter personal, client-confidential, diplomatic, or unpublished information in free-text fields. Optional email is stored separately from usage events.")
+        feedback_requested = st.form_submit_button("Send feedback", use_container_width=True)
+
+    if feedback_requested:
+        normalized_email = interview_email.strip()
+        if normalized_email and not re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", normalized_email):
+            st.error("Please enter a valid email address or leave the field blank.")
+        elif normalized_email and not email_consent:
+            st.error("Please check the consent box to submit an interview email.")
+        elif submit_feedback({"satisfaction": satisfaction, "helpfulness": helpfulness, "false_positive_level": false_positive_level, "most_useful_rule": most_useful_rule, "requested_features": requested_features.strip(), "reuse_intent": reuse_intent, "job_group": job_group, "comments": comments.strip()}, normalized_email if email_consent else ""):
+            st.success("Thank you. Your feedback was submitted.")
+        elif not telemetry_enabled():
+            st.warning("Feedback storage is not configured yet. Please contact contact@ltli.kr.")
+        else:
+            st.error("Feedback could not be saved. Please try again later.")
 
 
 # --------------------------------------------------
@@ -900,6 +938,7 @@ elif input_mode == "Bilingual XLSX":
         validate_file_size(uploaded_file)
         dataframe = pd.read_excel(uploaded_file)
     except Exception as error:
+        track_event("qa_failed", {"stage": "file_read", "error_type": type(error).__name__})
         st.error(f"Failed to read the file: {error}")
         st.stop()
 
@@ -915,6 +954,7 @@ else:
             target_file,
         )
     except ValueError as error:
+        track_event("qa_failed", {"stage": "alignment", "error_type": type(error).__name__})
         st.error(str(error))
         st.stop()
 
@@ -935,6 +975,7 @@ else:
 try:
     dataframe = normalize_bilingual_columns(dataframe)
 except ValueError as error:
+    track_event("qa_failed", {"stage": "column_validation", "error_type": type(error).__name__})
     st.error(
         str(error)
     )
@@ -943,6 +984,24 @@ except ValueError as error:
     st.write(list(dataframe.columns))
 
     st.stop()
+
+if input_mode == "Bilingual XLSX":
+    analytics_files = [uploaded_file]
+else:
+    analytics_files = [source_file, target_file]
+
+file_formats = [get_file_extension(item).upper() for item in analytics_files]
+size_buckets = [file_size_bucket(getattr(item, "size", None)) for item in analytics_files]
+upload_event_key = "|".join([input_mode, *file_formats, *size_buckets])
+if st.session_state.get("active_upload_key") != upload_event_key:
+    for result_key in ("qa_result_dataframe", "qa_error_dataframe", "qa_issue_summary"):
+        st.session_state.pop(result_key, None)
+    st.session_state["active_upload_key"] = upload_event_key
+track_once(
+    f"file_uploaded_{upload_event_key}",
+    "file_uploaded",
+    {"file_formats": file_formats, "file_count": len(analytics_files), "size_buckets": size_buckets},
+)
 
 
 # --------------------------------------------------
@@ -966,68 +1025,7 @@ with detail_column:
 # --------------------------------------------------
 # QA 실행
 # --------------------------------------------------
-if run_requested:
-    result_dataframe = dataframe.copy()
-
-    result_dataframe["QA Issues"] = (
-        result_dataframe.apply(
-            lambda row: run_qa_check(
-                row["Source"],
-                row["Target"],
-                glossary_entries
-            ),
-            axis=1
-        )
-    )
-
-    result_dataframe["QA Result"] = (
-        result_dataframe["QA Issues"].apply(
-            lambda issues: "Pass"
-            if not issues
-            else "Error"
-        )
-    )
-
-    result_dataframe["QA Issues"] = (
-        result_dataframe["QA Issues"].apply(
-            lambda issues: ", ".join(issues)
-        )
-    )
-
-    error_dataframe = result_dataframe[
-        result_dataframe["QA Result"] == "Error"
-    ].copy()
-
-    total_segments = len(result_dataframe)
-    error_count = len(error_dataframe)
-    pass_count = total_segments - error_count
-
-    pass_rate = (
-        pass_count / total_segments * 100
-        if total_segments > 0
-        else 0
-    )
-
-    st.session_state["qa_result_dataframe"] = result_dataframe
-    st.session_state["qa_error_dataframe"] = error_dataframe
-    st.session_state["qa_issue_summary"] = issue_summary if "issue_summary" in locals() else None
-
-    # --------------------------------------------------
-    # 요약
-    # --------------------------------------------------
-    st.markdown('<div class="ltli-section">3. QA results</div>', unsafe_allow_html=True)
-
-    column1, column2, column3, column4 = st.columns(4)
-
-    column1.metric("Total Segments", total_segments)
-    column2.metric("Passed", pass_count)
-    column3.metric("Errors", error_count)
-    column4.metric("Pass Rate", f"{pass_rate:.1f}%")
-
-    # --------------------------------------------------
-    # 오류 유형별 집계
-    # --------------------------------------------------
-    issue_types = [
+issue_types = [
     "Missing translation",
     "Source and target are identical",
     "Number mismatch",
@@ -1043,76 +1041,79 @@ if run_requested:
     "Shortcut mismatch",
     "Unit mismatch",
     "Terminology mismatch"
-    ]
+]
 
-    issue_summary = pd.DataFrame(
-        {
+if run_requested:
+    qa_started_at = time.perf_counter()
+    qa_metadata = {"input_mode": input_mode, "glossary_used": bool(glossary_entries), "segment_count": len(dataframe)}
+    track_event("qa_started", qa_metadata)
+    try:
+        result_dataframe = dataframe.copy()
+        result_dataframe["QA Issues"] = result_dataframe.apply(
+            lambda row: run_qa_check(row["Source"], row["Target"], glossary_entries), axis=1
+        )
+        result_dataframe["QA Result"] = result_dataframe["QA Issues"].apply(
+            lambda issues: "Pass" if not issues else "Error"
+        )
+        result_dataframe["QA Issues"] = result_dataframe["QA Issues"].apply(
+            lambda issues: ", ".join(issues)
+        )
+        error_dataframe = result_dataframe[result_dataframe["QA Result"] == "Error"].copy()
+        issue_summary = pd.DataFrame({
             "Issue Type": issue_types,
-            "Count": [
-                result_dataframe["QA Issues"]
-                .str.contains(
-                    issue,
-                    regex=False
-                )
-                .sum()
-                for issue in issue_types
-            ]
-        }
-    )
+            "Count": [int(result_dataframe["QA Issues"].str.contains(issue, regex=False).sum()) for issue in issue_types],
+        })
+        st.session_state["qa_result_dataframe"] = result_dataframe
+        st.session_state["qa_error_dataframe"] = error_dataframe
+        st.session_state["qa_issue_summary"] = issue_summary
+        track_event("qa_completed", {
+            **qa_metadata,
+            "processing_ms": elapsed_milliseconds(qa_started_at),
+            "error_segment_count": len(error_dataframe),
+            "issue_counts": {
+                str(row["Issue Type"]): int(row["Count"])
+                for _, row in issue_summary.iterrows()
+            },
+        })
+    except Exception as error:
+        track_event("qa_failed", {"stage": "qa_processing", "error_type": type(error).__name__})
+        st.error("QA could not be completed. Please check the input and try again.")
 
+if "qa_result_dataframe" in st.session_state:
+    result_dataframe = st.session_state["qa_result_dataframe"]
+    error_dataframe = st.session_state["qa_error_dataframe"]
+    issue_summary = st.session_state["qa_issue_summary"]
+    total_segments = len(result_dataframe)
+    error_count = len(error_dataframe)
+    pass_count = total_segments - error_count
+    pass_rate = pass_count / total_segments * 100 if total_segments else 0
+
+    st.markdown('<div class="ltli-section">3. QA results</div>', unsafe_allow_html=True)
+    column1, column2, column3, column4 = st.columns(4)
+    column1.metric("Total Segments", total_segments)
+    column2.metric("Passed", pass_count)
+    column3.metric("Errors", error_count)
+    column4.metric("Pass Rate", f"{pass_rate:.1f}%")
     st.markdown("#### Issue overview")
-
-    st.dataframe(
-        issue_summary,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # --------------------------------------------------
-    # 전체 결과
-    # --------------------------------------------------
+    st.dataframe(issue_summary, use_container_width=True, hide_index=True)
     st.markdown("#### All segments")
-
-    st.dataframe(
-        result_dataframe,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # --------------------------------------------------
-    # 오류 결과
-    # --------------------------------------------------
-    if error_count > 0:
-        st.error(
-            f"{error_count} segment(s) contain QA issues."
-        )
-
+    st.dataframe(result_dataframe, use_container_width=True, hide_index=True)
+    if error_count:
+        st.error(f"{error_count} segment(s) contain QA issues.")
         st.markdown("#### Issues requiring review")
-
-        st.dataframe(
-            error_dataframe,
-            use_container_width=True,
-            hide_index=True
-        )
-
+        st.dataframe(error_dataframe, use_container_width=True, hide_index=True)
     else:
         st.success("No QA issues were found.")
 
-    # --------------------------------------------------
-    # 다운로드
-    # --------------------------------------------------
-    excel_data = convert_dataframe_to_excel(
-        result_dataframe
-    )
+    def record_report_download():
+        track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
 
     st.download_button(
         label="Download Excel report  ↓",
-        data=excel_data,
+        data=convert_dataframe_to_excel(result_dataframe),
         file_name="ltli_qa_results.xlsx",
-        mime=(
-            "application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
-        ),
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        on_click=record_report_download,
         use_container_width=True,
     )
 
