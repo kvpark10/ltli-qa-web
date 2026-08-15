@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import html
+import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
 from typing import Any, Mapping
 
 import streamlit as st
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _smtp_settings() -> dict[str, Any] | None:
@@ -83,5 +87,12 @@ def send_feedback_notification(feedback: Mapping[str, Any]) -> bool:
                 smtp.login(settings["username"], settings["password"])
                 smtp.send_message(message)
         return True
-    except (OSError, smtplib.SMTPException, ValueError):
+    except (OSError, smtplib.SMTPException, ValueError) as error:
+        # Never log credentials or message contents. The exception type and
+        # SMTP response are sufficient for operational diagnosis.
+        LOGGER.warning(
+            "LTLI feedback email notification failed (%s): %s",
+            type(error).__name__,
+            error,
+        )
         return False
