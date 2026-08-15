@@ -162,6 +162,14 @@ def submit_feedback(feedback: Mapping[str, Any], interview_email: str = "") -> b
                 "interview_opt_in": bool(interview_email),
             },
         )
+        # Notification delivery is best-effort and never changes the user's
+        # successful feedback result. Interview email is not included.
+        try:
+            from email_notifications import send_feedback_notification
+
+            send_feedback_notification(feedback)
+        except (ImportError, RuntimeError, TypeError, ValueError):
+            pass
         return True
     return False
 
