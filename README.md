@@ -75,11 +75,3 @@ the Git repository.
 Suggestions and inquiries:
 
 contact@ltli.kr
-
-## Legacy Documentation
-
-Historical Supabase configuration and beta-related
-
-documentation are retained for reference only.
-
-They are not part of the AWS production telemetry backend.
