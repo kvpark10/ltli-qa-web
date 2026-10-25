@@ -17,7 +17,7 @@ from typing import Any, Mapping
 import streamlit as st
 
 
-APP_VERSION = "1.2.0-beta"
+APP_VERSION = "1.2.0"
 EVENT_NAMES = {
     "session_started",
     "file_uploaded",
