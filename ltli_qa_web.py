@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 import re
 import time
 from collections import Counter
@@ -881,6 +882,58 @@ def convert_dataframe_to_excel(dataframe):
 # --------------------------------------------------
 st.markdown(f'<div class="ltli-section">{L("add_files", "1. Add files")}</div>', unsafe_allow_html=True)
 st.caption(L("choose_format", "Choose the input format that matches your translation workflow."))
+
+# Download examples before uploading files. XLSX uses Source/Target columns;
+# DOCX requires a separate source and target document.
+downloads_dir = Path(__file__).resolve().parent / "qa_downloads"
+
+with st.expander(
+    L("downloads_title", "📥 Download sample files and blank templates"),
+    expanded=False,
+):
+    st.caption(
+        L(
+            "downloads_help",
+            "The Excel sample is one bilingual file. For Word, download both source and target files and upload them together. Samples contain fictional data and intentional QA issues.",
+        )
+    )
+    for item_type, heading in [
+        ("sample", L("sample_label", "Sample files · ready to test")),
+        ("template", L("template_label", "Blank templates · add your own content")),
+    ]:
+        st.markdown(f"**{heading}**")
+        excel_col, source_col, target_col = st.columns(3)
+        items = [
+            (excel_col, f"LTLI_QA_{item_type}.xlsx", L("download_xlsx", "⬇ Excel (.xlsx)")),
+            (source_col, f"LTLI_QA_{item_type}_source.docx", L("download_source", "⬇ Word source (.docx)")),
+            (target_col, f"LTLI_QA_{item_type}_target.docx", L("download_target", "⬇ Word target (.docx)")),
+        ]
+        for column, filename, label in items:
+            filepath = downloads_dir / filename
+            with column:
+                if filepath.is_file():
+                    st.download_button(
+                        label=label,
+                        data=filepath.read_bytes(),
+                        file_name=filename,
+                        mime=(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            if filename.endswith(".xlsx")
+                            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ),
+                        key=f"qa_download_{item_type}_{filename}",
+                        use_container_width=True,
+                    )
+                else:
+                    st.caption(
+                        L("downloads_unavailable", "File not yet installed")
+                    )
+    st.caption(
+        L(
+            "template_help",
+            "Excel templates contain Source and Target headers. Word templates are separate empty documents; keep paragraph alignment between source and target.",
+        )
+    )
 
 xlsx_tab, paired_tab = st.tabs([L("xlsx_tab", "📊 Bilingual XLSX"), L("pair_tab", "📄 Separate DOCX / TXT")])
 
