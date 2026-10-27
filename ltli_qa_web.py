@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 import re
 import time
 from collections import Counter
@@ -8,7 +9,7 @@ import streamlit as st
 from docx import Document
 
 from telemetry import (
-    APP_VERSION, elapsed_milliseconds, file_size_bucket, submit_feedback,
+    APP_VERSION, elapsed_milliseconds, file_size_bucket,
     telemetry_enabled, track_event, track_once,
 )
 
@@ -22,13 +23,58 @@ st.set_page_config(
 
 LANGUAGE = {
     "ko": {
-        "hero_title": "번역 QA,<br>더 명확하게.", "hero_text": "이중언어 파일의 일관성 문제를 몇 초 안에 찾고, 팀이 바로 활용할 수 있는 보고서를 만드세요.",
-        "public_beta": "공개 베타", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
+        "hero_title": "반복적인 번역 검사를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자, 용어 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
+        "brand_name": "LTLI · 언어와 기술의 연결", "public_beta": "LTLI QA", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
         "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "15개 검사 실행", "step2_text": "숫자, 태그, 용어, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
-        "policy": "🔒 업로드 전 확인 — 베타 데이터 정책", "policy_text": "공개용 테스트 자료만 사용하세요. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
+        "policy": "🔒 업로드 전 확인 — 파일 업로드 및 데이터 보호 안내", "policy_text": "공개 가능한 자료만 업로드하시기 바랍니다. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
         "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "feedback_callout": "💬 QA를 사용해 보셨나요? 2분 피드백을 남겨 주세요.", "feedback_after_qa": "💬 결과는 어떠셨나요? 베타 피드백 남기기", "feedback_after_qa_text": "여러분의 실제 사용 경험은 검사 정확도와 다음 기능의 우선순위를 정하는 데 큰 도움이 됩니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
         "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.", "drop_xlsx": "이중언어 스프레드시트를 업로드하세요", "required_columns": "필수 열: Source 및 Target · 최대 10MB", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.", "glossary": "＋ 용어집 추가(선택)", "glossary_file": "용어집 파일",
         "review": "2. 미리보기 및 QA 실행", "ready": "개의 정렬된 세그먼트가 준비되었습니다. 미리보기를 확인한 후 검사를 시작하세요.", "run": "QA 검사 실행 →", "results": "3. QA 결과", "overview": "#### 오류 요약", "all_segments": "#### 전체 세그먼트", "review_issues": "#### 검토가 필요한 오류", "no_issues": "QA 오류가 발견되지 않았습니다.", "download": "Excel 보고서 다운로드 ↓",
+        'contact': '문의 및 제안: contact@ltli.kr · 홈페이지: https://ltli.ai',
+        'xlsx_help': '스프레드시트에는 Source 열과 Target 열이 각각 하나씩 있어야 합니다.',
+        'glossary_help': '필수 열: Source Term 및 Target Term (공백·밑줄·대소문자 차이 허용).',
+        'upload_xlsx': '이중언어 XLSX 파일을 업로드하세요.',
+        'upload_pair': '원문 파일과 번역문 파일을 모두 업로드하세요.',
+        'current_columns': '현재 열:',
+        'qa_failed': 'QA를 완료하지 못했습니다. 입력 파일을 확인한 후 다시 시도하세요.',
+        'total': '전체 세그먼트',
+        'passed': '통과',
+        'errors': '검토 필요',
+        'pass_rate': '통과율',
+        'format': '파일 형식',
+        'source_units': '원문 단위 수',
+        'target_units': '번역문 단위 수',
+        'glossary_loaded': '용어집 항목 {count}개를 불러왔습니다.',
+        'uploaded': '업로드 완료: {name}',
+        'file_read_failed': '파일을 읽지 못했습니다. 파일 형식과 크기(최대 10MB)를 확인하세요.',
+        'issue_count': '{count}개 세그먼트에서 검토가 필요한 문제가 발견되었습니다.',
+        'aligned': '{unit} {count}개를 정렬했습니다.',
+        'paragraphs': '문단',
+        'lines': '줄',
+        'checks_description': '번역 누락, 원문과 동일한 번역, 숫자, 구두점, 태그, 자리표시자, 괄호, URL, 이메일, 공백, 파일명, 단축키, 단위 및 용어를 검사합니다. 자동 QA는 최종 언어 검수를 대체하지 않습니다.',
+        'downloads_title': '📥 샘플 파일 및 빈 템플릿 다운로드',
+        'downloads_help': 'Excel 샘플은 원문과 번역문이 포함된 하나의 파일입니다. Word 샘플은 원문과 번역문을 각각 다운로드하여 함께 업로드하세요. 샘플에는 가상 데이터와 의도적인 QA 오류가 포함되어 있습니다.',
+        'sample_label': '테스트용 샘플 파일',
+        'template_label': '작성용 빈 템플릿',
+        'download_xlsx': '⬇ Excel (.xlsx)',
+        'download_source': '⬇ Word 원문 파일 (.docx)',
+        'download_target': '⬇ Word 번역문 파일 (.docx)',
+        'downloads_unavailable': '파일이 아직 제공되지 않습니다',
+        'template_help': 'Excel 템플릿에는 Source 및 Target 열이 있습니다. Word 템플릿은 별도의 빈 문서입니다. 원문과 번역문의 문단 수와 순서를 맞춰 작성하세요.',
+        'validation_0': '파일에는 Source 열과 Target 열이 각각 하나씩 있어야 합니다. 열 이름은 대소문자를 구분하지 않습니다.',
+        'validation_1': '{name} 파일이 비어 있습니다.',
+        'validation_2': '{name} 파일이 10MB 크기 제한을 초과합니다.',
+        'validation_3': 'DOCX 파일을 읽지 못했습니다: {name}. 파일이 손상되지 않았는지 확인하세요.',
+        'validation_4': '{name} 파일을 해독하지 못했습니다. UTF-8, UTF-16 또는 CP949로 저장하세요.',
+        'validation_5': '원문과 번역문 파일의 형식이 같아야 합니다(DOCX + DOCX 또는 TXT + TXT).',
+        'validation_6': 'DOCX 및 TXT 파일 쌍만 지원합니다.',
+        'validation_7': '원문에서 비어 있지 않은 세그먼트를 찾지 못했습니다.',
+        'validation_8': '번역문에서 비어 있지 않은 세그먼트를 찾지 못했습니다.',
+        'validation_9': '문서 구조가 다릅니다. 원문은 {source_count}개, 번역문은 {target_count}개입니다. 비어 있지 않은 문단 또는 줄의 수와 순서를 맞춘 후 다시 실행하세요.',
+        'validation_10': '용어집은 XLSX 또는 CSV 파일이어야 합니다.',
+        'validation_11': '용어집 파일을 읽지 못했습니다. 파일 형식과 내용을 확인하세요.',
+        'validation_12': '용어집에는 Source Term 및 Target Term 열이 필요합니다. source_term 및 target_term 표기도 지원합니다.',
+        'footer': '언어기술현지화연구소 · LTLI QA · 번역가, 검수자 및 현지화 팀을 위한 도구',
     },
     "en": {}
 }
@@ -54,6 +100,27 @@ UI_LANGUAGE = st.session_state["ui_language"]
 
 def L(key, english):
     return LANGUAGE.get(UI_LANGUAGE, {}).get(key, english)
+
+ISSUE_LABELS_KO = {'Missing translation': '번역 누락', 'Source and target are identical': '원문과 번역문 동일', 'Number mismatch': '숫자 불일치', 'Punctuation mismatch': '구두점 불일치', 'Tag mismatch': '태그 불일치', 'Placeholder mismatch': '자리표시자 불일치', 'Bracket mismatch': '괄호 불일치', 'Unbalanced target brackets': '번역문 괄호 짝 불일치', 'URL mismatch': 'URL 불일치', 'Email mismatch': '이메일 불일치', 'Whitespace warning': '공백 주의', 'File name mismatch': '파일명 불일치', 'Shortcut mismatch': '단축키 불일치', 'Unit mismatch': '단위 불일치', 'Terminology mismatch': '용어 불일치', 'Leading space': '앞쪽 공백', 'Trailing space': '뒤쪽 공백', 'Multiple spaces': '연속 공백', 'Tab character': '탭 문자'}
+
+def localized_results(frame):
+    """Translate presentation copies; preserve reports, rule IDs, and analytics."""
+    if UI_LANGUAGE != "ko":
+        return frame
+    display = frame.copy()
+    def translate(value):
+        if not isinstance(value, str):
+            return value
+        for english, korean in ISSUE_LABELS_KO.items():
+            value = value.replace(english, korean)
+        return value
+    for column in ("QA Issues", "Issue Type"):
+        if column in display:
+            display[column] = display[column].map(translate)
+    if "QA Result" in display:
+        display["QA Result"] = display["QA Result"].replace({"Pass": "통과", "Error": "검토 필요"})
+    return display.rename(columns={"Segment": "세그먼트", "Source": "원문", "Target": "번역문", "QA Issues": "검출 사항", "QA Result": "검사 결과", "Issue Type": "문제 유형", "Count": "건수"})
+
 
 hero_html = (
     """
@@ -115,11 +182,11 @@ hero_html = (
     }
     </style>
     <section class="ltli-hero">
-      <div class="ltli-brand">LANGUAGE TECHNOLOGY LOCALIZATION INSTITUTE</div>
-      <h1>Translation QA,<br>made clear.</h1>
-      <p>Find consistency issues across bilingual files in seconds—and export a practical report your team can act on.</p>
+      <div class="ltli-brand">LTLI · Language &amp; Technology</div>
+      <h1>Simplify Routine<br>Translation QA.</h1>
+      <p>Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report.</p>
       <div class="ltli-badges">
-        <span class="ltli-badge">Public beta</span><span class="ltli-badge">Free to use</span>
+        <span class="ltli-badge">Free to use</span>
         <span class="ltli-badge">XLSX · DOCX · TXT</span><span class="ltli-badge">No account required</span>
       </div>
     </section>
@@ -132,9 +199,9 @@ hero_html = (
 )
 hero_html = hero_html[0]
 for source, target in {
-    "Translation QA,<br>made clear.": L("hero_title", "Translation QA,<br>made clear."),
-    "Find consistency issues across bilingual files in seconds—and export a practical report your team can act on.": L("hero_text", "Find consistency issues across bilingual files in seconds—and export a practical report your team can act on."),
-    "Public beta": L("public_beta", "Public beta"), "Free to use": L("free", "Free to use"), "No account required": L("no_account", "No account required"),
+    "Simplify Routine<br>Translation QA.": L("hero_title", "Simplify Routine<br>Translation QA."),
+    "Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report.": L("hero_text", "Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report."),
+    "LTLI · Language &amp; Technology": L("brand_name", "LTLI · Language &amp; Technology"), "Public beta": L("public_beta", "LTLI QA"), "Free to use": L("free", "Free to use"), "No account required": L("no_account", "No account required"),
     "Add your files": L("step1", "Add your files"), "Upload bilingual XLSX or an aligned file pair.": L("step1_text", "Upload bilingual XLSX or an aligned file pair."),
     "Run 15 checks": L("step2", "Run 15 checks"), "Review numbers, tags, terms, spacing, and more.": L("step2_text", "Review numbers, tags, terms, spacing, and more."),
     "Export results": L("step3", "Export results"), "Download a shareable Excel QA report.": L("step3_text", "Download a shareable Excel QA report."),
@@ -142,52 +209,13 @@ for source, target in {
     hero_html = hero_html.replace(source, target)
 st.markdown(hero_html, unsafe_allow_html=True)
 
-with st.expander(L("policy", "🔒 Before you upload — beta data policy"), expanded=False):
+with st.expander(L("policy", "🔒 Before you upload — file handling policy"), expanded=False):
     st.warning(
         L("policy_text", "Use public test data only. Do not upload personal information, customer-confidential files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB.")
     )
-    st.caption("Questions or feedback: contact@ltli.kr · Website: https://ltli.kr")
+    st.caption(L('contact', 'Inquiries & Suggestions: contact@ltli.kr · Website: https://ltli.ai'))
 
 track_once("session_started", "session_started", {"app_version": APP_VERSION})
-
-def render_feedback_form(location):
-    with st.form(f"beta_feedback_form_{location}", clear_on_submit=True):
-        satisfaction = st.slider(L("satisfaction", "Overall satisfaction"), 1, 5, 4, key=f"satisfaction_{location}")
-        option_ko = {"Yes":"예", "Partly":"일부 도움", "No":"아니요", "Not yet tested":"아직 테스트하지 않음", "None":"없음", "A few":"약간", "Many":"많음", "Not sure":"잘 모르겠음", "Maybe":"아마도"}
-        helpfulness = st.radio(L("helpful", "Did the results help with actual review?"), ["Yes", "Partly", "No", "Not yet tested"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value, key=f"helpfulness_{location}")
-        false_positive_level = st.radio(L("false_positive", "How many false positives did you notice?"), ["None", "A few", "Many", "Not sure"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value, key=f"false_positive_{location}")
-        useful_ko = {"Missing translation":"미번역", "Identical source/target":"원문·번역문 동일", "Numbers":"숫자", "Punctuation":"구두점", "Tags/placeholders":"태그·자리표시자", "Brackets":"괄호", "URLs/emails":"URL·이메일", "Whitespace":"공백", "Filenames/shortcuts/units":"파일명·단축키·단위", "Terminology":"용어"}
-        most_useful_rule = st.selectbox(L("useful", "Most useful check"), ["", "Missing translation", "Identical source/target", "Numbers", "Punctuation", "Tags/placeholders", "Brackets", "URLs/emails", "Whitespace", "Filenames/shortcuts/units", "Terminology"], format_func=lambda value: useful_ko.get(value, value) if UI_LANGUAGE == "ko" else value, key=f"useful_{location}")
-        requested_features = st.text_area(L("features", "Features you would like"), max_chars=1000, key=f"features_{location}")
-        reuse_intent = st.radio(L("reuse", "Would you use LTLI QA again?"), ["Yes", "Maybe", "No"], format_func=lambda value: option_ko.get(value, value) if UI_LANGUAGE == "ko" else value, key=f"reuse_{location}")
-        role_ko = {"Translator":"번역사", "Reviewer":"검수자", "Localization PM":"현지화 PM", "Translation company":"번역회사", "Student/educator":"학생·교육자", "Other":"기타"}
-        job_group = st.selectbox(L("role", "Role (optional)"), ["", "Translator", "Reviewer", "Localization PM", "Translation company", "Student/educator", "Other"], format_func=lambda value: role_ko.get(value, value) if UI_LANGUAGE == "ko" else value, key=f"role_{location}")
-        comments = st.text_area(L("comments", "Other comments (optional)"), max_chars=2000, key=f"comments_{location}")
-        interview_email = st.text_input(L("interview", "Email for a follow-up interview (optional)"), max_chars=254, key=f"email_{location}")
-        email_consent = st.checkbox(L("consent", "I consent to LTLI storing this email solely to contact me about the beta interview."), key=f"consent_{location}")
-        st.caption(L("privacy_caption", "Anonymous feedback uses a random session ID. Do not enter personal, client-confidential, diplomatic, or unpublished information in free-text fields. Optional email is stored separately from usage events."))
-        feedback_requested = st.form_submit_button(L("send", "Send feedback"), use_container_width=True)
-
-    if feedback_requested:
-        normalized_email = interview_email.strip()
-        if normalized_email and not re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", normalized_email):
-            st.error("Please enter a valid email address or leave the field blank.")
-        elif normalized_email and not email_consent:
-            st.error("Please check the consent box to submit an interview email.")
-        elif submit_feedback({"satisfaction": satisfaction, "helpfulness": helpfulness, "false_positive_level": false_positive_level, "most_useful_rule": most_useful_rule, "requested_features": requested_features.strip(), "reuse_intent": reuse_intent, "job_group": job_group, "comments": comments.strip()}, normalized_email if email_consent else ""):
-            st.success(L("thanks", "Thank you. Your feedback was submitted."))
-        elif not telemetry_enabled():
-            st.warning("Feedback storage is not configured yet. Please contact contact@ltli.kr.")
-        else:
-            st.error("Feedback could not be saved. Please try again later.")
-
-st.markdown(f'<div class="ltli-feedback-callout">{L("feedback_callout", "💬 Tried LTLI QA? Please share two minutes of feedback.")}</div>', unsafe_allow_html=True)
-
-with st.sidebar:
-    st.header(L("feedback", "Beta feedback"))
-    st.caption(L("feedback_intro", "Your feedback helps us improve LTLI QA. It can be submitted at any time."))
-    render_feedback_form("sidebar")
-
 
 # --------------------------------------------------
 # 공통 함수
@@ -222,8 +250,8 @@ def normalize_bilingual_columns(dataframe):
 
     if len(source_columns) != 1 or len(target_columns) != 1:
         raise ValueError(
-            "The file must contain exactly one Source column and one Target "
-            "column. Column names are case-insensitive."
+            L('validation_0', "The file must contain exactly one Source column and one Target "
+            "column. Column names are case-insensitive.")
         )
 
     return normalized_dataframe.rename(
@@ -242,11 +270,11 @@ def validate_file_size(uploaded_file):
     file_size = getattr(uploaded_file, "size", None)
 
     if file_size == 0:
-        raise ValueError(f"{uploaded_file.name} is empty.")
+        raise ValueError((LANGUAGE["ko"]['validation_1'].format(name=uploaded_file.name) if UI_LANGUAGE == "ko" else f"{uploaded_file.name} is empty."))
 
     if file_size is not None and file_size > MAX_FILE_SIZE_BYTES:
         raise ValueError(
-            f"{uploaded_file.name} exceeds the 10 MB file-size limit."
+            (LANGUAGE["ko"]['validation_2'].format(name=uploaded_file.name) if UI_LANGUAGE == "ko" else f"{uploaded_file.name} exceeds the 10 MB file-size limit.")
         )
 
 
@@ -267,7 +295,7 @@ def read_docx_segments(uploaded_file):
         document = Document(io.BytesIO(uploaded_file.getvalue()))
     except Exception as error:
         raise ValueError(
-            f"Failed to read DOCX file {uploaded_file.name}: {error}"
+            (LANGUAGE["ko"]['validation_3'].format(name=uploaded_file.name) if UI_LANGUAGE == "ko" else f"Failed to read DOCX file {uploaded_file.name}: {error}")
         ) from error
 
     return [
@@ -291,7 +319,7 @@ def decode_text_bytes(raw_bytes, file_name):
             continue
 
     raise ValueError(
-        f"Could not decode {file_name}. Save it as UTF-8, UTF-16, or CP949."
+        (LANGUAGE["ko"]['validation_4'].format(name=file_name) if UI_LANGUAGE == "ko" else f"Could not decode {file_name}. Save it as UTF-8, UTF-16, or CP949.")
     )
 
 
@@ -313,7 +341,7 @@ def build_parallel_dataframe(source_file, target_file):
 
     if source_extension != target_extension:
         raise ValueError(
-            "Source and target files must use the same format (DOCX + DOCX or TXT + TXT)."
+            L('validation_5', "Source and target files must use the same format (DOCX + DOCX or TXT + TXT).")
         )
 
     metadata = {"format": source_extension.upper()}
@@ -333,23 +361,23 @@ def build_parallel_dataframe(source_file, target_file):
             }
         )
     else:
-        raise ValueError("Only DOCX and TXT file pairs are supported.")
+        raise ValueError(L('validation_6', "Only DOCX and TXT file pairs are supported."))
 
     if not source_segments:
-        raise ValueError("No non-empty source segments were found.")
+        raise ValueError(L('validation_7', "No non-empty source segments were found."))
 
     if not target_segments:
-        raise ValueError("No non-empty target segments were found.")
+        raise ValueError(L('validation_8', "No non-empty target segments were found."))
 
     metadata["source_count"] = len(source_segments)
     metadata["target_count"] = len(target_segments)
 
     if len(source_segments) != len(target_segments):
         raise ValueError(
-            "Document structure mismatch: "
+            (LANGUAGE["ko"]['validation_9'].format(source_count=len(source_segments), target_count=len(target_segments)) if UI_LANGUAGE == "ko" else "Document structure mismatch: "
             f"source has {len(source_segments)} {metadata['unit']}, "
             f"but target has {len(target_segments)}. "
-            "Align the documents before running QA."
+            "Align the documents before running QA.")
         )
 
     dataframe = pd.DataFrame(
@@ -398,10 +426,10 @@ def load_glossary(glossary_file):
                     encoding="cp949"
                 )
         else:
-            raise ValueError("Glossary file must be XLSX or CSV.")
+            raise ValueError(L('validation_10', "Glossary file must be XLSX or CSV."))
     except Exception as error:
         raise ValueError(
-            f"Failed to read glossary file: {error}"
+            L('validation_11', f"Failed to read glossary file: {error}")
         ) from error
 
     glossary_dataframe.columns = [str(column).strip() for column in glossary_dataframe.columns]
@@ -418,9 +446,9 @@ def load_glossary(glossary_file):
 
     if source_column is None or target_column is None:
         raise ValueError(
-            "Glossary file must contain source and target term columns. "
+            L('validation_12', "Glossary file must contain source and target term columns. "
             "Supported names: Source Term/Target Term or "
-            "source_term/target_term."
+            "source_term/target_term.")
         )
 
     glossary_entries = []
@@ -921,6 +949,58 @@ def convert_dataframe_to_excel(dataframe):
 st.markdown(f'<div class="ltli-section">{L("add_files", "1. Add files")}</div>', unsafe_allow_html=True)
 st.caption(L("choose_format", "Choose the input format that matches your translation workflow."))
 
+# Download examples before uploading files. XLSX uses Source/Target columns;
+# DOCX requires a separate source and target document.
+downloads_dir = Path(__file__).resolve().parent / "qa_downloads"
+
+with st.expander(
+    L("downloads_title", "📥 Download sample files and blank templates"),
+    expanded=False,
+):
+    st.caption(
+        L(
+            "downloads_help",
+            "The Excel sample is one bilingual file. For Word, download both source and target files and upload them together. Samples contain fictional data and intentional QA issues.",
+        )
+    )
+    for item_type, heading in [
+        ("sample", L("sample_label", "Sample files · ready to test")),
+        ("template", L("template_label", "Blank templates · add your own content")),
+    ]:
+        st.markdown(f"**{heading}**")
+        excel_col, source_col, target_col = st.columns(3)
+        items = [
+            (excel_col, f"LTLI_QA_{item_type}.xlsx", L("download_xlsx", "⬇ Excel (.xlsx)")),
+            (source_col, f"LTLI_QA_{item_type}_source.docx", L("download_source", "⬇ Word source (.docx)")),
+            (target_col, f"LTLI_QA_{item_type}_target.docx", L("download_target", "⬇ Word target (.docx)")),
+        ]
+        for column, filename, label in items:
+            filepath = downloads_dir / filename
+            with column:
+                if filepath.is_file():
+                    st.download_button(
+                        label=label,
+                        data=filepath.read_bytes(),
+                        file_name=filename,
+                        mime=(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            if filename.endswith(".xlsx")
+                            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ),
+                        key=f"qa_download_{item_type}_{filename}",
+                        use_container_width=True,
+                    )
+                else:
+                    st.caption(
+                        L("downloads_unavailable", "File Not Available")
+                    )
+    st.caption(
+        L(
+            "template_help",
+            "Excel templates contain Source and Target headers. Word templates are separate empty documents; keep paragraph alignment between source and target.",
+        )
+    )
+
 xlsx_tab, paired_tab = st.tabs([L("xlsx_tab", "📊 Bilingual XLSX"), L("pair_tab", "📄 Separate DOCX / TXT")])
 
 uploaded_file = None
@@ -931,7 +1011,7 @@ with xlsx_tab:
     uploaded_file = st.file_uploader(
         L("drop_xlsx", "Drop a bilingual spreadsheet here"),
         type=["xlsx"],
-        help="The spreadsheet needs exactly one Source column and one Target column.",
+        help=L('xlsx_help', 'The spreadsheet needs exactly one Source column and one Target column.'),
         key="bilingual_xlsx_uploader",
     )
     st.caption(L("required_columns", "Required columns: Source and Target · Maximum 10 MB"))
@@ -960,7 +1040,7 @@ else:
 with st.expander(L("glossary", "＋ Add a terminology glossary (optional)")):
     glossary_file = st.file_uploader(
         L("glossary_file", "Glossary file"), type=["csv", "xlsx"], key="glossary_uploader",
-        help="Columns: Source Term and Target Term (space, underscore, and case variations accepted)."
+        help=L('glossary_help', 'Columns: Source Term and Target Term (space, underscore, and case variations accepted).')
     )
 
 glossary_entries = []
@@ -969,7 +1049,7 @@ if glossary_file is not None:
     try:
         glossary_entries = load_glossary(glossary_file)
         st.success(
-            f"Loaded {len(glossary_entries)} glossary entries."
+            L('glossary_loaded', 'Loaded {count} glossary entries.').format(count=len(glossary_entries))
         )
     except ValueError as error:
         st.error(str(error))
@@ -983,7 +1063,7 @@ if input_mode is None:
     st.stop()
 elif input_mode == "Bilingual XLSX":
     if uploaded_file is None:
-        st.info("Please upload a bilingual XLSX file.")
+        st.info(L('upload_xlsx', 'Please upload a bilingual XLSX file.'))
         st.stop()
 
     try:
@@ -991,13 +1071,13 @@ elif input_mode == "Bilingual XLSX":
         dataframe = pd.read_excel(uploaded_file)
     except Exception as error:
         track_event("qa_failed", {"stage": "file_read", "error_type": type(error).__name__})
-        st.error(f"Failed to read the file: {error}")
+        st.error(L('file_read_failed', 'Failed to read the file. Check the format and file size (up to 10 MB).'))
         st.stop()
 
-    st.success(f"Uploaded: {uploaded_file.name}")
+    st.success(L('uploaded', 'Uploaded: {name}').format(name=uploaded_file.name))
 else:
     if source_file is None or target_file is None:
-        st.info("Please upload both the source file and the target file.")
+        st.info(L('upload_pair', 'Please upload both the source file and the target file.'))
         st.stop()
 
     try:
@@ -1011,14 +1091,13 @@ else:
         st.stop()
 
     st.success(
-        f"Aligned {alignment_metadata['source_count']} "
-        f"{alignment_metadata['unit']}."
+        L('aligned', 'Aligned {count} {unit}.').format(count=alignment_metadata['source_count'], unit=L(alignment_metadata['unit'], alignment_metadata['unit']))
     )
 
     metric1, metric2, metric3 = st.columns(3)
-    metric1.metric("Format", alignment_metadata["format"])
-    metric2.metric("Source units", alignment_metadata["source_count"])
-    metric3.metric("Target units", alignment_metadata["target_count"])
+    metric1.metric(L('format', 'Format'), alignment_metadata["format"])
+    metric2.metric(L('source_units', 'Source units'), alignment_metadata["source_count"])
+    metric3.metric(L('target_units', 'Target units'), alignment_metadata["target_count"])
 
 
 # --------------------------------------------------
@@ -1032,7 +1111,7 @@ except ValueError as error:
         str(error)
     )
 
-    st.write("Current columns:")
+    st.write(L('current_columns', 'Current columns:'))
     st.write(list(dataframe.columns))
 
     st.stop()
@@ -1063,7 +1142,7 @@ st.markdown(f'<div class="ltli-section">{L("review", "2. Review and run QA")}</d
 st.caption(f"{len(dataframe):,}{L('ready', ' aligned segment(s) are ready. Confirm the preview, then start the check.')}")
 
 st.dataframe(
-    dataframe,
+    localized_results(dataframe),
     use_container_width=True,
     hide_index=True
 )
@@ -1072,7 +1151,7 @@ run_column, detail_column = st.columns([1, 2])
 with run_column:
     run_requested = st.button(L("run", "Run QA checks  →"), type="primary", use_container_width=True)
 with detail_column:
-    st.caption("Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology.")
+    st.caption(L('checks_description', 'Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology. Automated QA does not replace final human review.'))
 
 # --------------------------------------------------
 # QA 실행
@@ -1129,7 +1208,7 @@ if run_requested:
         })
     except Exception as error:
         track_event("qa_failed", {"stage": "qa_processing", "error_type": type(error).__name__})
-        st.error("QA could not be completed. Please check the input and try again.")
+        st.error(L('qa_failed', 'QA could not be completed. Please check the input and try again.'))
 
 if "qa_result_dataframe" in st.session_state:
     result_dataframe = st.session_state["qa_result_dataframe"]
@@ -1142,18 +1221,18 @@ if "qa_result_dataframe" in st.session_state:
 
     st.markdown(f'<div class="ltli-section">{L("results", "3. QA results")}</div>', unsafe_allow_html=True)
     column1, column2, column3, column4 = st.columns(4)
-    column1.metric("Total Segments", total_segments)
-    column2.metric("Passed", pass_count)
-    column3.metric("Errors", error_count)
-    column4.metric("Pass Rate", f"{pass_rate:.1f}%")
+    column1.metric(L('total', 'Total Segments'), total_segments)
+    column2.metric(L('passed', 'Passed'), pass_count)
+    column3.metric(L('errors', 'Issues'), error_count)
+    column4.metric(L('pass_rate', 'Pass Rate'), f"{pass_rate:.1f}%")
     st.markdown(L("overview", "#### Issue overview"))
-    st.dataframe(issue_summary, use_container_width=True, hide_index=True)
+    st.dataframe(localized_results(issue_summary), use_container_width=True, hide_index=True)
     st.markdown(L("all_segments", "#### All segments"))
-    st.dataframe(result_dataframe, use_container_width=True, hide_index=True)
+    st.dataframe(localized_results(result_dataframe), use_container_width=True, hide_index=True)
     if error_count:
-        st.error(f"{error_count} segment(s) contain QA issues.")
+        st.error(L('issue_count', '{count} segment(s) contain QA issues.').format(count=error_count))
         st.markdown(L("review_issues", "#### Issues requiring review"))
-        st.dataframe(error_dataframe, use_container_width=True, hide_index=True)
+        st.dataframe(localized_results(error_dataframe), use_container_width=True, hide_index=True)
     else:
         st.success(L("no_issues", "No QA issues were found."))
 
@@ -1169,12 +1248,8 @@ if "qa_result_dataframe" in st.session_state:
         use_container_width=True,
     )
 
-    st.markdown(f'<div class="ltli-feedback-callout">{L("feedback_after_qa_text", "Your real-world experience helps us improve check accuracy and choose what to build next.")}</div>', unsafe_allow_html=True)
-    with st.expander(L("feedback_after_qa", "💬 How were the results? Share beta feedback"), expanded=True):
-        render_feedback_form("results")
 
 st.markdown(
-    '<div class="ltli-footer">LTLI QA Public Beta · Built for translators, reviewers, and localization teams · '
-    '<a href="mailto:contact@ltli.kr">contact@ltli.kr</a></div>',
+    '<div class="ltli-footer">' + L("footer", "Language Technology & Localization Institute · LTLI QA · Built for translators, reviewers, and localization teams") + ' · <a href="https://ltli.ai">LTLI</a> · <a href="mailto:contact@ltli.kr">contact@ltli.kr</a></div>',
     unsafe_allow_html=True,
 )

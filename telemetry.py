@@ -17,7 +17,7 @@ from typing import Any, Mapping
 import streamlit as st
 
 
-APP_VERSION = "1.2.0-beta"
+APP_VERSION = "1.2.0"
 EVENT_NAMES = {
     "session_started",
     "file_uploaded",
@@ -25,7 +25,6 @@ EVENT_NAMES = {
     "qa_completed",
     "qa_failed",
     "report_downloaded",
-    "feedback_submitted",
 }
 
 # Event-specific metadata allow-list. Any unexpected field is discarded.
@@ -39,7 +38,6 @@ EVENT_FIELDS = {
     },
     "qa_failed": {"stage", "error_type"},
     "report_downloaded": {"report_format", "segment_count"},
-    "feedback_submitted": {"satisfaction", "reuse_intent", "interview_opt_in"},
 }
 
 
@@ -63,43 +61,58 @@ def file_size_bucket(size_bytes: int | None) -> str:
     return "5_mb_to_10_mb"
 
 
-def _settings() -> tuple[str, str] | None:
-    try:
-        url = str(st.secrets["SUPABASE_URL"]).rstrip("/")
-        key = str(st.secrets["SUPABASE_ANON_KEY"])
-    except (KeyError, FileNotFoundError):
-        return None
-    if not url.startswith("https://") or not key:
-        return None
-    return url, key
-
-
 def telemetry_enabled() -> bool:
-    return _settings() is not None
+
+    """Whether Google Sheets telemetry is configured."""
+
+    from pathlib import Path
+
+    return Path(
+
+        "/etc/ltli/secrets/google-service-account.json"
+
+    ).is_file()
+
+
+
 
 
 def _insert(table: str, row: Mapping[str, Any]) -> bool:
-    """Insert one row through Supabase REST; never interrupt the QA workflow."""
-    settings = _settings()
-    if settings is None:
+
+    """Write anonymous events to Google Sheets."""
+
+    if table != "analytics_events":
+
         return False
-    url, key = settings
-    try:
-        request = urllib.request.Request(
-            f"{url}/rest/v1/{table}",
-            data=json.dumps(dict(row), ensure_ascii=False).encode("utf-8"),
-            headers={
-                "apikey": key,
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=3) as response:
-            return 200 <= response.status < 300
-    except (urllib.error.URLError, TimeoutError, TypeError, ValueError):
-        return False
+
+
+
+    from google_sheets_storage import append_event
+
+
+
+    metadata = {
+
+        "app_version": row.get("app_version"),
+
+        **(row.get("event_data") or {}),
+
+    }
+
+
+
+    return append_event(
+
+        session_id=row["session_id"],
+
+        event_name=row["event_name"],
+
+        metadata=metadata,
+
+    )
+
+
+
 
 
 def track_event(event_name: str, metadata: Mapping[str, Any] | None = None) -> bool:
@@ -128,50 +141,6 @@ def track_once(event_key: str, event_name: str, metadata: Mapping[str, Any] | No
     # Mark attempted events as complete so an outage cannot cause repeated calls.
     st.session_state[state_key] = True
     return track_event(event_name, metadata)
-
-
-def submit_feedback(feedback: Mapping[str, Any], interview_email: str = "") -> bool:
-    """Store feedback and, with consent, an interview email in separate tables."""
-    session_id = get_session_id()
-    feedback_row = {
-        "session_id": session_id,
-        "satisfaction": feedback["satisfaction"],
-        "helpfulness": feedback["helpfulness"],
-        "false_positive_level": feedback["false_positive_level"],
-        "most_useful_rule": feedback.get("most_useful_rule") or None,
-        "requested_features": feedback.get("requested_features") or None,
-        "reuse_intent": feedback["reuse_intent"],
-        "job_group": feedback.get("job_group") or None,
-        "comments": feedback.get("comments") or None,
-    }
-    feedback_saved = _insert("beta_feedback", feedback_row)
-
-    email_saved = True
-    if interview_email:
-        email_saved = _insert(
-            "interview_opt_ins",
-            {"session_id": session_id, "email": interview_email.strip()},
-        )
-
-    if feedback_saved and email_saved:
-        track_event(
-            "feedback_submitted",
-            {
-                "satisfaction": feedback["satisfaction"],
-                "reuse_intent": feedback["reuse_intent"],
-                "interview_opt_in": bool(interview_email),
-            },
-        )
-        # Notification delivery is best-effort and never changes the user's
-        # successful feedback result. Interview email is not included.
-        try:
-            from email_notifications import send_feedback_notification
-
-            send_feedback_notification(feedback)
-        except (ImportError, RuntimeError, TypeError, ValueError):
-            pass
-        return True
-    return False
 
 
 def elapsed_milliseconds(started_at: float) -> int:

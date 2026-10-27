@@ -1,21 +1,77 @@
-# LTLI QA Public Beta
+# LTLI QA
 
-Streamlit-based translation QA for bilingual XLSX and aligned DOCX/TXT files.
+Free Translation Quality Assurance Web Application
 
-## Main files
+Developed by the Language Technology & Localization Institute (LTLI).
 
-- `ltli_qa_web.py`: application and QA interface
-- `telemetry.py`: privacy-first anonymous usage events and feedback storage
-- `supabase_schema.sql`: Supabase tables and row-level security policies
-- `ANALYTICS_SETUP.md`: setup, privacy design, and deployment checklist
-- `.streamlit/secrets.toml.example`: Streamlit Secrets template
+## Official Service
 
-Run locally:
+https://qa.ltli.ai
 
-```bash
-python -m pip install -r requirements.txt
-python -m streamlit run ltli_qa_web.py
-```
+## Features
 
-The QA app continues to work when Supabase Secrets are absent or telemetry is
-temporarily unavailable.
+- Bilingual XLSX quality assurance
+
+- Aligned DOCX and TXT file support
+
+- Translation consistency and formatting checks
+
+- Number, punctuation, tag, and placeholder checks
+
+- Terminology and glossary checks
+
+- Downloadable Excel QA reports
+
+- Korean and English user interface
+
+## Technology
+
+- Python and Streamlit
+
+- AWS Lightsail (Seoul)
+
+- Nginx reverse proxy
+
+- HTTPS with Let's Encrypt
+
+- Google Sheets API for anonymous usage analytics
+
+## Privacy
+
+LTLI QA records limited anonymous usage events.
+
+Uploaded source and target texts, filenames, and glossary
+
+contents are not included in usage analytics.
+
+The application does not provide an in-app feedback form
+
+or collect interview registration information.
+
+## Local Development
+
+Install dependencies:
+
+    python -m pip install -r requirements.txt
+
+Run the application:
+
+    python -m streamlit run ltli_qa_web.py
+
+## Production Deployment
+
+The production application runs on AWS Lightsail
+
+using the systemd service `ltli-qa`.
+
+Nginx provides HTTPS access at https://qa.ltli.ai.
+
+Google Sheets credentials are stored outside
+
+the Git repository.
+
+## Contact
+
+Suggestions and inquiries:
+
+contact@ltli.kr
