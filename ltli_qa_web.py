@@ -7,6 +7,7 @@ from collections import Counter
 import pandas as pd
 import streamlit as st
 from docx import Document
+from qa_help import help_for, notice_for, GUIDE
 
 from telemetry import (
     APP_VERSION, elapsed_milliseconds, file_size_bucket,
@@ -208,6 +209,11 @@ for source, target in {
 }.items():
     hero_html = hero_html.replace(source, target)
 st.markdown(hero_html, unsafe_allow_html=True)
+
+guide_title, guide_steps = GUIDE[UI_LANGUAGE]
+with st.expander(guide_title, expanded=False):
+    for step in guide_steps:
+        st.write(step)
 
 with st.expander(L("policy", "🔒 Before you upload — file handling policy"), expanded=False):
     st.warning(
@@ -988,6 +994,7 @@ with st.expander(
                             else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         ),
                         key=f"qa_download_{item_type}_{filename}",
+                        help=help_for(item_type, UI_LANGUAGE),
                         use_container_width=True,
                     )
                 else:
@@ -1011,7 +1018,7 @@ with xlsx_tab:
     uploaded_file = st.file_uploader(
         L("drop_xlsx", "Drop a bilingual spreadsheet here"),
         type=["xlsx"],
-        help=L('xlsx_help', 'The spreadsheet needs exactly one Source column and one Target column.'),
+        help=help_for('xlsx', UI_LANGUAGE),
         key="bilingual_xlsx_uploader",
     )
     st.caption(L("required_columns", "Required columns: Source and Target · Maximum 10 MB"))
@@ -1020,11 +1027,11 @@ with paired_tab:
     source_column, target_column = st.columns(2)
     with source_column:
         source_file = st.file_uploader(
-            L("source_file", "Source file"), type=["docx", "txt"], key="source_document_uploader"
+            L("source_file", "Source file"), type=["docx", "txt"], key="source_document_uploader", help=help_for("source", UI_LANGUAGE)
         )
     with target_column:
         target_file = st.file_uploader(
-            L("target_file", "Target file"), type=["docx", "txt"], key="target_document_uploader"
+            L("target_file", "Target file"), type=["docx", "txt"], key="target_document_uploader", help=help_for("target", UI_LANGUAGE)
         )
     st.caption(
         L("pair_help", "Use two files of the same type. DOCX is aligned by non-empty paragraph; TXT is aligned by non-empty line.")
@@ -1040,7 +1047,7 @@ else:
 with st.expander(L("glossary", "＋ Add a terminology glossary (optional)")):
     glossary_file = st.file_uploader(
         L("glossary_file", "Glossary file"), type=["csv", "xlsx"], key="glossary_uploader",
-        help=L('glossary_help', 'Columns: Source Term and Target Term (space, underscore, and case variations accepted).')
+        help=help_for('glossary', UI_LANGUAGE)
     )
 
 glossary_entries = []
@@ -1147,9 +1154,11 @@ st.dataframe(
     hide_index=True
 )
 
+st.caption(notice_for("alignment", UI_LANGUAGE))
+st.caption(notice_for("rerun", UI_LANGUAGE))
 run_column, detail_column = st.columns([1, 2])
 with run_column:
-    run_requested = st.button(L("run", "Run QA checks  →"), type="primary", use_container_width=True)
+    run_requested = st.button(L("run", "Run QA checks  →"), type="primary", use_container_width=True, help=help_for("run", UI_LANGUAGE))
 with detail_column:
     st.caption(L('checks_description', 'Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology. Automated QA does not replace final human review.'))
 
@@ -1221,11 +1230,13 @@ if "qa_result_dataframe" in st.session_state:
 
     st.markdown(f'<div class="ltli-section">{L("results", "3. QA results")}</div>', unsafe_allow_html=True)
     column1, column2, column3, column4 = st.columns(4)
-    column1.metric(L('total', 'Total Segments'), total_segments)
-    column2.metric(L('passed', 'Passed'), pass_count)
-    column3.metric(L('errors', 'Issues'), error_count)
-    column4.metric(L('pass_rate', 'Pass Rate'), f"{pass_rate:.1f}%")
+    column1.metric(L('total', 'Total Segments'), total_segments, help=help_for('total', UI_LANGUAGE))
+    column2.metric(L('passed', 'Passed'), pass_count, help=help_for('passed', UI_LANGUAGE))
+    column3.metric(L('errors', 'Issues'), error_count, help=help_for('issues', UI_LANGUAGE))
+    column4.metric(L('pass_rate', 'Pass Rate'), f"{pass_rate:.1f}%", help=help_for('rate', UI_LANGUAGE))
+    st.info(notice_for('results', UI_LANGUAGE))
     st.markdown(L("overview", "#### Issue overview"))
+    st.caption(notice_for("summary", UI_LANGUAGE))
     st.dataframe(localized_results(issue_summary), use_container_width=True, hide_index=True)
     st.markdown(L("all_segments", "#### All segments"))
     st.dataframe(localized_results(result_dataframe), use_container_width=True, hide_index=True)
@@ -1239,7 +1250,9 @@ if "qa_result_dataframe" in st.session_state:
     def record_report_download():
         track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
 
+    st.caption(notice_for("download", UI_LANGUAGE))
     st.download_button(
+        help=help_for("report", UI_LANGUAGE),
         label=L("download", "Download Excel report  ↓"),
         data=convert_dataframe_to_excel(result_dataframe),
         file_name="ltli_qa_results.xlsx",
