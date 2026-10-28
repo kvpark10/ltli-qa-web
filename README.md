@@ -75,3 +75,11 @@ the Git repository.
 Suggestions and inquiries:
 
 contact@ltli.kr
+
+## Contextual UI help
+
+Korean/English contextual help uses the same approach as LTLI Translate: a collapsible workflow guide, native widget help tooltips, and persistent notices for alignment, rerunning QA and report contents. Tooltips cover input files, sample/template downloads, optional terminology, Run QA, result metrics and Excel download.
+
+The screen explains that corrections are made in the original files, followed by reupload and rerun. Pass rate is an automated check statistic, not a semantic quality score. Reports include source and target text. QA rule logic, report format and telemetry are unchanged.
+
+Validation: `python -m unittest discover -s tests -v` — 7 tests including localized UI AppTest, upload/run/report path and existing regression checks. UI tests stub telemetry and do not write analytics. Real browser hover/mobile checks remain part of deployment review.
