@@ -83,3 +83,9 @@ Korean/English contextual help uses the same approach as LTLI Translate: a colla
 The screen explains that corrections are made in the original files, followed by reupload and rerun. Pass rate is an automated check statistic, not a semantic quality score. Reports include source and target text. QA rule logic, report format and telemetry are unchanged.
 
 Validation: `python -m unittest discover -s tests -v` — 7 tests including localized UI AppTest, upload/run/report path and existing regression checks. UI tests stub telemetry and do not write analytics. Real browser hover/mobile checks remain part of deployment review.
+
+
+
+## QA 화면 간소화
+
+선택 용어집 업로드와 화면상의 용어 불일치 검사를 제거했습니다. 현재 파일의 QA는 숫자·태그·자리표시자 등 14개 규칙 유형을 사용하며, 용어집 없이 실행합니다. 사용 안내·검사 소개·결과 요약에서 용어집 적용 안내를 제거했습니다. 사람이 의미·표현을 판단하는 작업은 언어 검수, 자동 규칙 검사는 QA로 구분합니다.
