@@ -24,16 +24,15 @@ st.set_page_config(
 
 LANGUAGE = {
     "ko": {
-        "hero_title": "반복적인 번역 검사를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자, 용어 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
+        "hero_title": "반복적인 번역 검사를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
         "brand_name": "LTLI · 언어와 기술의 연결", "public_beta": "LTLI QA", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
-        "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "15개 검사 실행", "step2_text": "숫자, 태그, 용어, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
+        "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "14개 QA 검사 실행", "step2_text": "숫자, 태그, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
         "policy": "🔒 업로드 전 확인 — 파일 업로드 및 데이터 보호 안내", "policy_text": "공개 가능한 자료만 업로드하시기 바랍니다. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
-        "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "feedback_callout": "💬 QA를 사용해 보셨나요? 2분 피드백을 남겨 주세요.", "feedback_after_qa": "💬 결과는 어떠셨나요? 베타 피드백 남기기", "feedback_after_qa_text": "여러분의 실제 사용 경험은 검사 정확도와 다음 기능의 우선순위를 정하는 데 큰 도움이 됩니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
-        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.", "drop_xlsx": "이중언어 스프레드시트를 업로드하세요", "required_columns": "필수 열: Source 및 Target · 최대 10MB", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.", "glossary": "＋ 용어집 추가(선택)", "glossary_file": "용어집 파일",
+        "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "feedback_callout": "💬 QA를 사용해 보셨나요? 2분 피드백을 남겨 주세요.", "feedback_after_qa": "💬 결과는 어떠셨나요? 베타 피드백 남기기", "feedback_after_qa_text": "여러분의 실제 사용 경험은 검사 정확도와 다음 기능의 우선순위를 정하는 데 큰 도움이 됩니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 언어 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
+        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.", "drop_xlsx": "이중언어 스프레드시트를 업로드하세요", "required_columns": "필수 열: Source 및 Target · 최대 10MB", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.",
         "review": "2. 미리보기 및 QA 실행", "ready": "개의 정렬된 세그먼트가 준비되었습니다. 미리보기를 확인한 후 검사를 시작하세요.", "run": "QA 검사 실행 →", "results": "3. QA 결과", "overview": "#### 오류 요약", "all_segments": "#### 전체 세그먼트", "review_issues": "#### 검토가 필요한 오류", "no_issues": "QA 오류가 발견되지 않았습니다.", "download": "Excel 보고서 다운로드 ↓",
         'contact': '문의 및 제안: contact@ltli.kr · 홈페이지: https://ltli.ai',
         'xlsx_help': '스프레드시트에는 Source 열과 Target 열이 각각 하나씩 있어야 합니다.',
-        'glossary_help': '필수 열: Source Term 및 Target Term (공백·밑줄·대소문자 차이 허용).',
         'upload_xlsx': '이중언어 XLSX 파일을 업로드하세요.',
         'upload_pair': '원문 파일과 번역문 파일을 모두 업로드하세요.',
         'current_columns': '현재 열:',
@@ -45,14 +44,13 @@ LANGUAGE = {
         'format': '파일 형식',
         'source_units': '원문 단위 수',
         'target_units': '번역문 단위 수',
-        'glossary_loaded': '용어집 항목 {count}개를 불러왔습니다.',
         'uploaded': '업로드 완료: {name}',
         'file_read_failed': '파일을 읽지 못했습니다. 파일 형식과 크기(최대 10MB)를 확인하세요.',
         'issue_count': '{count}개 세그먼트에서 검토가 필요한 문제가 발견되었습니다.',
         'aligned': '{unit} {count}개를 정렬했습니다.',
         'paragraphs': '문단',
         'lines': '줄',
-        'checks_description': '번역 누락, 원문과 동일한 번역, 숫자, 구두점, 태그, 자리표시자, 괄호, URL, 이메일, 공백, 파일명, 단축키, 단위 및 용어를 검사합니다. 자동 QA는 최종 언어 검수를 대체하지 않습니다.',
+        'checks_description': '번역 누락, 원문과 동일한 번역, 숫자, 구두점, 태그, 자리표시자, 괄호, URL, 이메일, 공백, 파일명, 단축키, 단위를 검사합니다. 자동 QA는 최종 언어 검수를 대체하지 않습니다.',
         'downloads_title': '📥 샘플 파일 및 빈 템플릿 다운로드',
         'downloads_help': 'Excel 샘플은 원문과 번역문이 포함된 하나의 파일입니다. Word 샘플은 원문과 번역문을 각각 다운로드하여 함께 업로드하세요. 샘플에는 가상 데이터와 의도적인 QA 오류가 포함되어 있습니다.',
         'sample_label': '테스트용 샘플 파일',
@@ -75,7 +73,7 @@ LANGUAGE = {
         'validation_10': '용어집은 XLSX 또는 CSV 파일이어야 합니다.',
         'validation_11': '용어집 파일을 읽지 못했습니다. 파일 형식과 내용을 확인하세요.',
         'validation_12': '용어집에는 Source Term 및 Target Term 열이 필요합니다. source_term 및 target_term 표기도 지원합니다.',
-        'footer': '언어기술현지화연구소 · LTLI QA · 번역가, 검수자 및 현지화 팀을 위한 도구',
+        'footer': '언어기술현지화연구소 · LTLI QA · 번역가, 언어 검수자 및 현지화 팀을 위한 도구',
     },
     "en": {}
 }
@@ -185,7 +183,7 @@ hero_html = (
     <section class="ltli-hero">
       <div class="ltli-brand">LTLI · Language &amp; Technology</div>
       <h1>Simplify Routine<br>Translation QA.</h1>
-      <p>Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report.</p>
+      <p>Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report.</p>
       <div class="ltli-badges">
         <span class="ltli-badge">Free to use</span>
         <span class="ltli-badge">XLSX · DOCX · TXT</span><span class="ltli-badge">No account required</span>
@@ -193,7 +191,7 @@ hero_html = (
     </section>
     <div class="ltli-steps">
       <div class="ltli-step"><strong>01 · Add your files</strong><span>Upload bilingual XLSX or an aligned file pair.</span></div>
-      <div class="ltli-step"><strong>02 · Run 15 checks</strong><span>Review numbers, tags, terms, spacing, and more.</span></div>
+      <div class="ltli-step"><strong>02 · Run 14 QA checks</strong><span>Check numbers, tags, spacing, and more.</span></div>
       <div class="ltli-step"><strong>03 · Export results</strong><span>Download a shareable Excel QA report.</span></div>
     </div>
     """,
@@ -201,10 +199,10 @@ hero_html = (
 hero_html = hero_html[0]
 for source, target in {
     "Simplify Routine<br>Translation QA.": L("hero_title", "Simplify Routine<br>Translation QA."),
-    "Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report.": L("hero_text", "Automatically check translations for issues involving numbers, tags, placeholders, terminology, and more. Review the findings and download an Excel QA report."),
+    "Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report.": L("hero_text", "Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report."),
     "LTLI · Language &amp; Technology": L("brand_name", "LTLI · Language &amp; Technology"), "Public beta": L("public_beta", "LTLI QA"), "Free to use": L("free", "Free to use"), "No account required": L("no_account", "No account required"),
     "Add your files": L("step1", "Add your files"), "Upload bilingual XLSX or an aligned file pair.": L("step1_text", "Upload bilingual XLSX or an aligned file pair."),
-    "Run 15 checks": L("step2", "Run 15 checks"), "Review numbers, tags, terms, spacing, and more.": L("step2_text", "Review numbers, tags, terms, spacing, and more."),
+    "Run 14 QA checks": L("step2", "Run 14 QA checks"), "Check numbers, tags, spacing, and more.": L("step2_text", "Check numbers, tags, spacing, and more."),
     "Export results": L("step3", "Export results"), "Download a shareable Excel QA report.": L("step3_text", "Download a shareable Excel QA report."),
 }.items():
     hero_html = hero_html.replace(source, target)
@@ -1044,25 +1042,6 @@ elif source_file is not None or target_file is not None:
 else:
     input_mode = None
 
-with st.expander(L("glossary", "＋ Add a terminology glossary (optional)")):
-    glossary_file = st.file_uploader(
-        L("glossary_file", "Glossary file"), type=["csv", "xlsx"], key="glossary_uploader",
-        help=help_for('glossary', UI_LANGUAGE)
-    )
-
-glossary_entries = []
-
-if glossary_file is not None:
-    try:
-        glossary_entries = load_glossary(glossary_file)
-        st.success(
-            L('glossary_loaded', 'Loaded {count} glossary entries.').format(count=len(glossary_entries))
-        )
-    except ValueError as error:
-        st.error(str(error))
-        st.stop()
-
-
 alignment_metadata = None
 
 if input_mode is None:
@@ -1160,7 +1139,7 @@ run_column, detail_column = st.columns([1, 2])
 with run_column:
     run_requested = st.button(L("run", "Run QA checks  →"), type="primary", use_container_width=True, help=help_for("run", UI_LANGUAGE))
 with detail_column:
-    st.caption(L('checks_description', 'Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, units, and terminology. Automated QA does not replace final human review.'))
+    st.caption(L('checks_description', 'Checks missing text, identical segments, numbers, punctuation, tags, placeholders, brackets, URLs, emails, whitespace, filenames, shortcuts, and units. Automated QA does not replace final human linguistic review.'))
 
 # --------------------------------------------------
 # QA 실행
@@ -1179,18 +1158,17 @@ issue_types = [
     "Whitespace warning",
     "File name mismatch",
     "Shortcut mismatch",
-    "Unit mismatch",
-    "Terminology mismatch"
+    "Unit mismatch"
 ]
 
 if run_requested:
     qa_started_at = time.perf_counter()
-    qa_metadata = {"input_mode": input_mode, "glossary_used": bool(glossary_entries), "segment_count": len(dataframe)}
+    qa_metadata = {"input_mode": input_mode, "glossary_used": False, "segment_count": len(dataframe)}
     track_event("qa_started", qa_metadata)
     try:
         result_dataframe = dataframe.copy()
         result_dataframe["QA Issues"] = result_dataframe.apply(
-            lambda row: run_qa_check(row["Source"], row["Target"], glossary_entries), axis=1
+            lambda row: run_qa_check(row["Source"], row["Target"]), axis=1
         )
         result_dataframe["QA Result"] = result_dataframe["QA Issues"].apply(
             lambda issues: "Pass" if not issues else "Error"
@@ -1266,3 +1244,4 @@ st.markdown(
     '<div class="ltli-footer">' + L("footer", "Language Technology & Localization Institute · LTLI QA · Built for translators, reviewers, and localization teams") + ' · <a href="https://ltli.ai">LTLI</a> · <a href="mailto:contact@ltli.kr">contact@ltli.kr</a></div>',
     unsafe_allow_html=True,
 )
+

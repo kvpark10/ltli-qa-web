@@ -29,11 +29,12 @@ class UiHelpTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertIn('사용 방법', [x.label for x in app.expander])
             self.assertTrue(app.file_uploader(key='source_document_uploader').proto.help)
-            self.assertIn('선택사항', app.file_uploader(key='glossary_uploader').proto.help)
+            self.assertNotIn('glossary_uploader', [x.key for x in app.file_uploader])
+            self.assertFalse(any('용어집' in x.label or 'glossary' in x.label.lower() for x in app.expander))
             app.selectbox[0].select('English').run()
             self.assertFalse(app.exception)
             self.assertIn('How to use', [x.label for x in app.expander])
-            self.assertIn('Optional', app.file_uploader(key='glossary_uploader').proto.help)
+            self.assertNotIn('glossary_uploader', [x.key for x in app.file_uploader])
 
     def test_qa_help_does_not_change_results_or_report(self):
         buffer = io.BytesIO()
@@ -52,6 +53,7 @@ class UiHelpTests(unittest.TestCase):
             self.assertIn('Number mismatch', results.iloc[0]['QA Issues'])
             self.assertNotIn('Number mismatch', results.iloc[1]['QA Issues'])
             self.assertEqual(len(results), 2)
+            self.assertNotIn('Terminology mismatch', app.session_state['qa_issue_summary']['Issue Type'].tolist())
             self.assertTrue(any('의미 정확성' in x.value for x in app.info))
             self.assertTrue(all(x.proto.help for x in app.metric))
             download = app.get('download_button')[-1]
@@ -62,3 +64,4 @@ class UiHelpTests(unittest.TestCase):
             convert_dataframe_to_excel = helpers['convert_dataframe_to_excel']
             exported = pd.read_excel(io.BytesIO(convert_dataframe_to_excel(results)))
             self.assertEqual(exported['Source'].tolist(), results['Source'].tolist())
+
