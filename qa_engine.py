@@ -411,7 +411,7 @@ def run_qa_check(source, target, glossary_entries=None):
 
     return issues
 
-def convert_dataframe_to_excel(dataframe):
+def convert_dataframe_to_excel(dataframe, decisions=None):
     output = io.BytesIO()
 
     # Prevent uploaded text from being interpreted as a spreadsheet formula
@@ -432,9 +432,15 @@ def convert_dataframe_to_excel(dataframe):
             sheet_name="QA Results"
         )
 
+        if decisions:
+            pd.DataFrame([{'Segment':d['id'],'QA Issue':d['issue'],'Decision':'Accepted by user',
+                           'Accepted at (UTC)':d['accepted_at'],'Content fingerprint':d['fingerprint']}
+                          for d in decisions]).to_excel(writer,index=False,sheet_name='User Decisions')
         pd.DataFrame({'검사 범위 / Scope':[
             '형식·구조 검사 결과입니다. 의미 정확성·문법·자연스러움은 검사하지 않습니다.',
             '경고가 없더라도 번역의 언어적 품질이 검증된 것은 아닙니다. 최종 언어 검수는 별도로 진행해 주세요.',
+            '사용자 문제없음 처리는 경고에 대한 사용자 판단이며, 검사 통과나 언어 검수 승인이 아닙니다.',
+            'User-accepted warnings reflect user judgment, not automated clearance or linguistic approval.',
             'Checks formatting and structure only. Meaning accuracy, grammar and fluency are not evaluated.',
             'No warnings does not establish linguistic quality. Final linguistic review is still needed.'
         ]}).to_excel(writer,index=False,sheet_name='QA Scope')
@@ -443,6 +449,6 @@ def convert_dataframe_to_excel(dataframe):
         from openpyxl.styles import Alignment
         for row in sheet:
             for cell in row: cell.alignment=Alignment(wrap_text=True,vertical='top')
-        for index in range(2,6): sheet.row_dimensions[index].height=42
+        for index in range(2,8): sheet.row_dimensions[index].height=42
 
     return output.getvalue()

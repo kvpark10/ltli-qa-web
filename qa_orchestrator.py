@@ -63,7 +63,7 @@ def post(payload):
 
 
 def validate_request(payload):
-    if not isinstance(payload,dict) or set(payload)-{'action','request_id','message','consent','rows','files','previous_checks','selected_id','language'}:
+    if not isinstance(payload,dict) or set(payload)-{'action','request_id','message','consent','rows','files','previous_checks','selected_id','language','decisions'}:
         raise AgentError('agent_request')
     if payload.get('action')!='assist':raise AgentError('agent_request')
     if payload.get('consent') is not True:raise AgentError('agent_consent')
@@ -118,7 +118,7 @@ EXPLANATIONS={
  'Tag mismatch':('태그 또는 등장 횟수가 다릅니다.','Tags or their occurrence counts differ.'),
  'Placeholder mismatch':('자리표시자 또는 등장 횟수가 다릅니다.','Placeholders or their occurrence counts differ.'),
  'Bracket mismatch':('괄호 종류 또는 개수가 다릅니다.','Bracket types or counts differ.'),
- 'Unbalanced target brackets':('번역문에 짝이 맞지 않는 괄호가 있습니다.','Brackets are not balanced in the translation.'),
+ 'Unbalanced target brackets':('번역문에 여는 괄호와 닫는 괄호가 대응하지 않습니다.','Brackets are not balanced in the translation.'),
  'URL mismatch':('URL 또는 등장 횟수가 다릅니다.','URLs or their occurrence counts differ.'),
  'Email mismatch':('이메일 주소 또는 등장 횟수가 다릅니다.','Email addresses or occurrence counts differ.'),
  'File name mismatch':('파일명 표기가 다릅니다.','Filename expressions differ.'),
@@ -150,8 +150,8 @@ def coordinate(payload,rows,qa_tool,transport=None,budget=None):
     validate_request(payload)
     if transport is None and not configured():raise AgentError('agent_not_configured')
     previous=payload.get('previous_checks',list(CHECKS));english=payload.get('language')=='en'
-    current=qa_tool({'action':'qa','rows':rows,'checks':previous}) if rows else None
-    warned=[r['id'] for r in current['rows'] if r['issues']] if current else []
+    current=qa_tool({'action':'qa','rows':rows,'checks':previous,'decisions':payload.get('decisions',[])}) if rows else None
+    warned=[r['id'] for r in current['rows'] if r.get('active_issues',r['issues'])] if current else []
     selected=payload.get('selected_id')
     if selected is not None and selected>len(rows):raise AgentError('agent_request')
     summary={'segment_count':len(rows),'previous_checks':previous,'selected_segment':selected,
@@ -169,7 +169,7 @@ def coordinate(payload,rows,qa_tool,transport=None,budget=None):
             'segment':('설명할 구간 번호를 알려주시거나 경고 항목을 선택해 주세요.','Tell me the segment number or select a warning.'),
             'scope':('어떤 부분을 확인할까요? 전체 QA, 숫자·단위 또는 태그·자리표시자를 선택할 수 있습니다.','What should I check: all, numbers/units or tags/placeholders?')}[question][int(english)]
     elif action=='run_qa':
-        result['qa']=qa_tool({'action':'qa','rows':rows,'checks':checks})
+        result['qa']=qa_tool({'action':'qa','rows':rows,'checks':checks,'decisions':payload.get('decisions',[])})
         qa=result['qa'];result['reply']=(f"{qa['total']}개 구간 중 {qa['flagged']}개에 검토할 사항이 있습니다." if qa['flagged'] else f"{qa['total']}개 구간에서 현재 검사에 해당하는 경고가 없습니다.") if not english else f"{qa['flagged']} of {qa['total']} segments need review in these checks."
     elif action=='explain':
         index=decision['segment_id']
