@@ -39,7 +39,8 @@ def zip_guard(data):
             for member in members:
                 if member.filename.endswith(('.xml', '.rels')):
                     xml = archive.read(member)
-                    if b'<!DOCTYPE' in xml.upper() or b'<!ENTITY' in xml.upper():
+                    declarations = xml.replace(b'\x00', b'').upper()
+                    if b'<!DOCTYPE' in declarations or b'<!ENTITY' in declarations:
                         raise InputError('invalid_file')
     except (BadZipFile, OSError, RuntimeError):
         raise InputError('invalid_file') from None
@@ -105,6 +106,7 @@ def read_rows(payload):
                     if source is None and target is None: continue
                     rows.append({'source': str(source) if source is not None else '', 'target': str(target) if target is not None else ''})
                     if len(rows)>MAX_ROWS: raise InputError('row_limit')
+            except InputError: raise
             except (ValueError, KeyError, ET.ParseError): raise InputError('invalid_file') from None
             finally:
                 if book: book.close()

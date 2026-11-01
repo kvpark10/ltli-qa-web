@@ -39,7 +39,9 @@ class PublicApiTests(unittest.TestCase):
         book=Workbook();sheet=book.active;sheet.append(['Source','Target']);sheet.append([0,0]);sheet.append(['Hello',None]);out=io.BytesIO();book.save(out)
         r=execute({'action':'qa','files':[encoded('test.xlsx',out.getvalue())]})
         self.assertEqual(r['rows'][0]['source'],'0');self.assertIn('Missing translation',r['rows'][1]['issues'])
-        sheet.append(['Source','Target'])
+        sheet['C1']='Source';out=io.BytesIO();book.save(out)
+        with self.assertRaisesRegex(InputError,'columns'):
+            execute({'action':'qa','files':[encoded('duplicate.xlsx',out.getvalue())]})
     def test_invalid_xml_entities_size_and_encoding_fail_closed(self):
         out=io.BytesIO()
         with ZipFile(out,'w') as z:z.writestr('word/document.xml','<!DOCTYPE test [<!ENTITY x "secret">]><test/>')
