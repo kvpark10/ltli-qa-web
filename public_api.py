@@ -10,6 +10,7 @@ from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
 from openpyxl import load_workbook
 from qa_engine import run_qa_check, convert_dataframe_to_excel
+from qa_orchestrator import AgentError, validate_request, coordinate
 import pandas as pd
 
 MAX_FILE = 10 * 1024 * 1024
@@ -152,7 +153,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.respond(200,{'status':'ok'}) if self.path=='/api/qa/health' else self.respond(404,{'error':'not_found'})
     def do_POST(self):
-        if self.path not in ('/api/qa/check','/api/qa/report'): return self.respond(404,{'error':'not_found'})
+        if self.path not in ('/api/qa/check','/api/qa/report','/api/qa/assist'): return self.respond(404,{'error':'not_found'})
         # No CORS; browsers may submit only same-origin JSON, never a cross-site form.
         if self.headers.get('Sec-Fetch-Site')=='cross-site': return self.respond(403,{'error':'origin'})
         if self.headers.get('Content-Type','').split(';')[0]!='application/json': return self.respond(415,{'error':'content_type'})
@@ -161,7 +162,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 0<length<=MAX_BODY: return self.respond(413,{'error':'body_limit'})
             self.connection.settimeout(30)
             payload=json.loads(self.rfile.read(length))
-            result=execute(payload)
+            if self.path=='/api/qa/assist':
+                validate_request(payload)
+                rows=read_rows(payload) if ('rows' in payload or payload.get('files')) else []
+                result=coordinate(payload,rows,execute)
+            else: result=execute(payload)
             if self.path=='/api/qa/report':
                 frame=pd.DataFrame([{'Segment':r['id'],'Source':r['source'],'Target':r['target'],
                                      'QA Issues':'; '.join(r['issues']),'QA Result':'Review' if r['issues'] else 'No warning'}
@@ -174,6 +179,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header('Content-Length',str(len(body)))
                 self.end_headers();self.wfile.write(body)
             else: self.respond(200,result)
+        except AgentError as error:
+            code=str(error)
+            status=429 if code in ('agent_limit','agent_quota') else 403 if code=='agent_consent' else 503 if code in ('agent_not_configured','agent_unavailable') else 502 if code in ('invalid_plan','agent_network','agent_auth','agent_provider') else 400
+            self.respond(status,{'error':code})
         except InputError as error: self.respond(403 if str(error)=='qa_only' else 400,{'error':str(error)})
         except (ValueError,UnicodeError,TimeoutError): self.respond(400,{'error':'invalid_request'})
         except (BrokenPipeError,ConnectionResetError): pass
