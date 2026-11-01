@@ -24,7 +24,9 @@ def load_helpers():
             for target in node.targets
         )
     )]
-    namespace = dict(io=io, re=re, pd=pd, Document=Document, Counter=Counter, UI_LANGUAGE="ko")
+    import qa_engine
+    namespace = dict(vars(qa_engine))
+    namespace.update(io=io, re=re, pd=pd, Document=Document, Counter=Counter, UI_LANGUAGE="ko")
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(path), "exec"), namespace)
     return namespace, tree
 
@@ -75,3 +77,4 @@ class LocalizationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
