@@ -10,7 +10,7 @@ from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
 from openpyxl import load_workbook
 from qa_engine import run_qa_check, convert_dataframe_to_excel
-from qa_orchestrator import AgentError, validate_request, coordinate
+from qa_orchestrator import AgentError, validate_request, coordinate, explanation
 import pandas as pd
 from qa_findings import annotate, review, ReviewError
 
@@ -129,7 +129,7 @@ def read_rows(payload):
 
 def execute(payload):
     if not isinstance(payload,dict) or payload.get('action')!='qa': raise InputError('qa_only')
-    if set(payload)-{'action','rows','files','checks','decisions'}: raise InputError('invalid_request')
+    if set(payload)-{'action','rows','files','checks','decisions','explain_id','language'}: raise InputError('invalid_request')
     checks=payload.get('checks',list(RULES))
     if not isinstance(checks,list) or not checks or any(not isinstance(c,str) or c not in RULES for c in checks): raise InputError('checks')
     rows=read_rows(payload); results=[]
@@ -138,7 +138,14 @@ def execute(payload):
         all_issues=run_qa_check(row['source'],row['target'])
         issues=[i for i in all_issues if i.startswith(prefixes)]
         results.append({'id':index,**row,'issues':issues,'all_issues':all_issues})
-    return annotate({'version':'ltli-public-qa-1','rows':results,'total':len(results),'checks':checks},payload.get('decisions'))
+    result=annotate({'version':'ltli-public-qa-1','rows':results,'total':len(results),'checks':checks},payload.get('decisions'))
+    if 'explain_id' in payload:
+        index=payload['explain_id'];language=payload.get('language','ko')
+        if type(index) is not int or not 1<=index<=len(results) or language not in ('ko','en'):raise InputError('explain_request')
+        row=results[index-1]
+        result['explanation']=explanation({**row,'issues':row['active_issues']},language=='en')
+        result['explained_id']=index
+    return result
 
 
 class Handler(BaseHTTPRequestHandler):
