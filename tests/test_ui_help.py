@@ -1,5 +1,6 @@
 """Exercise help and the real QA/report path without calling telemetry services."""
 import io
+from pathlib import Path
 import sys
 import types
 import unittest
@@ -23,7 +24,7 @@ def telemetry_stub():
 class UiHelpTests(unittest.TestCase):
     def test_upload_guidance_in_both_languages(self):
         with patch.dict(sys.modules, {'telemetry': telemetry_stub()}):
-            app = AppTest.from_file('../ltli_qa_web.py', default_timeout=15)
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'ltli_qa_web.py'), default_timeout=15)
             app.query_params['lang'] = 'ko'
             app.run()
             self.assertFalse(app.exception)
@@ -40,7 +41,7 @@ class UiHelpTests(unittest.TestCase):
         buffer = io.BytesIO()
         pd.DataFrame({'Source': ['There are 2 files.', 'Save {0}.'], 'Target': ['파일은 3개입니다.', '{0}을 저장하세요.']}).to_excel(buffer, index=False)
         with patch.dict(sys.modules, {'telemetry': telemetry_stub()}):
-            app = AppTest.from_file('../ltli_qa_web.py', default_timeout=15)
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'ltli_qa_web.py'), default_timeout=15)
             app.query_params['lang'] = 'ko'
             app.run()
             app.file_uploader(key='bilingual_xlsx_uploader').set_value(('sample.xlsx', buffer.getvalue(), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')).run()
@@ -64,4 +65,5 @@ class UiHelpTests(unittest.TestCase):
             convert_dataframe_to_excel = helpers['convert_dataframe_to_excel']
             exported = pd.read_excel(io.BytesIO(convert_dataframe_to_excel(results)))
             self.assertEqual(exported['Source'].tolist(), results['Source'].tolist())
+
 
