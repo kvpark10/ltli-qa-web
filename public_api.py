@@ -12,6 +12,7 @@ from openpyxl import load_workbook
 from qa_engine import run_qa_check, convert_dataframe_to_excel
 from qa_orchestrator import AgentError, validate_request, coordinate
 import pandas as pd
+from qa_findings import annotate, review, ReviewError
 
 MAX_FILE = 10 * 1024 * 1024
 MAX_BODY = 29 * 1024 * 1024
@@ -128,16 +129,16 @@ def read_rows(payload):
 
 def execute(payload):
     if not isinstance(payload,dict) or payload.get('action')!='qa': raise InputError('qa_only')
-    if set(payload)-{'action','rows','files','checks'}: raise InputError('invalid_request')
+    if set(payload)-{'action','rows','files','checks','decisions'}: raise InputError('invalid_request')
     checks=payload.get('checks',list(RULES))
     if not isinstance(checks,list) or not checks or any(not isinstance(c,str) or c not in RULES for c in checks): raise InputError('checks')
     rows=read_rows(payload); results=[]
     prefixes=tuple(x for c in checks for x in RULES[c])
     for index,row in enumerate(rows,1):
-        issues=[i for i in run_qa_check(row['source'],row['target']) if i.startswith(prefixes)]
-        results.append({'id':index,**row,'issues':issues})
-    return {'version':'ltli-public-qa-1','rows':results,'total':len(results),
-            'flagged':sum(bool(r['issues']) for r in results),'checks':checks}
+        all_issues=run_qa_check(row['source'],row['target'])
+        issues=[i for i in all_issues if i.startswith(prefixes)]
+        results.append({'id':index,**row,'issues':issues,'all_issues':all_issues})
+    return annotate({'version':'ltli-public-qa-1','rows':results,'total':len(results),'checks':checks},payload.get('decisions'))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -153,7 +154,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.respond(200,{'status':'ok'}) if self.path=='/api/qa/health' else self.respond(404,{'error':'not_found'})
     def do_POST(self):
-        if self.path not in ('/api/qa/check','/api/qa/report','/api/qa/assist','/api/qa/prepare'): return self.respond(404,{'error':'not_found'})
+        if self.path not in ('/api/qa/check','/api/qa/report','/api/qa/assist','/api/qa/prepare','/api/qa/review'): return self.respond(404,{'error':'not_found'})
         # No CORS; browsers may submit only same-origin JSON, never a cross-site form.
         if self.headers.get('Sec-Fetch-Site')=='cross-site': return self.respond(403,{'error':'origin'})
         if self.headers.get('Content-Type','').split(';')[0]!='application/json': return self.respond(415,{'error':'content_type'})
@@ -167,6 +168,13 @@ class Handler(BaseHTTPRequestHandler):
                     raise InputError('invalid_request')
                 rows=read_rows(payload)
                 result={'version':'ltli-qa-input-1','total':len(rows),'rows':rows}
+            elif self.path=='/api/qa/review':
+                if not isinstance(payload,dict) or payload.get('action')!='review' or set(payload)-{'action','rows','checks','decisions','operation','row_id','issue','fingerprint'}:
+                    raise InputError('invalid_request')
+                result=execute({k:v for k,v in payload.items() if k in ('rows','checks','decisions')}|{'action':'qa'})
+                # Recompute all rules when validating old decisions during accept/restore.
+                for row in result['rows']:row['all_issues']=run_qa_check(row['source'],row['target'])
+                result=review(result,payload)
             elif self.path=='/api/qa/assist':
                 validate_request(payload)
                 rows=read_rows(payload) if ('rows' in payload or payload.get('files')) else []
@@ -174,9 +182,11 @@ class Handler(BaseHTTPRequestHandler):
             else: result=execute(payload)
             if self.path=='/api/qa/report':
                 frame=pd.DataFrame([{'Segment':r['id'],'Source':r['source'],'Target':r['target'],
-                                     'QA Issues':'; '.join(r['issues']),'QA Result':'Review' if r['issues'] else 'No warning'}
+                                     'QA Issues':'; '.join(r['issues']),'Active QA Issues':'; '.join(r['active_issues']),
+                                     'User Accepted Issues':'; '.join(r['accepted_issues']),
+                                     'QA Result':'Review' if r['active_issues'] else 'User accepted warnings' if r['accepted_issues'] else 'No warning'}
                                     for r in result['rows']])
-                body=convert_dataframe_to_excel(frame)
+                body=convert_dataframe_to_excel(frame,decisions=result['decisions'])
                 self.send_response(200)
                 self.send_header('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 self.send_header('Content-Disposition','attachment; filename="LTLI-QA-report.xlsx"')
@@ -184,6 +194,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header('Content-Length',str(len(body)))
                 self.end_headers();self.wfile.write(body)
             else: self.respond(200,result)
+        except ReviewError as error: self.respond(409 if str(error)=='stale_review' else 400,{'error':str(error)})
         except AgentError as error:
             code=str(error)
             status=429 if code in ('agent_limit','agent_quota') else 403 if code=='agent_consent' else 503 if code in ('agent_not_configured','agent_unavailable') else 502 if code in ('invalid_plan','agent_network','agent_auth','agent_provider') else 400
