@@ -432,4 +432,17 @@ def convert_dataframe_to_excel(dataframe):
             sheet_name="QA Results"
         )
 
+        pd.DataFrame({'검사 범위 / Scope':[
+            '형식·구조 검사 결과입니다. 의미 정확성·문법·자연스러움은 검사하지 않습니다.',
+            '경고가 없더라도 번역의 언어적 품질이 검증된 것은 아닙니다. 최종 언어 검수는 별도로 진행해 주세요.',
+            'Checks formatting and structure only. Meaning accuracy, grammar and fluency are not evaluated.',
+            'No warnings does not establish linguistic quality. Final linguistic review is still needed.'
+        ]}).to_excel(writer,index=False,sheet_name='QA Scope')
+        sheet=writer.sheets['QA Scope']
+        sheet.column_dimensions['A'].width=105
+        from openpyxl.styles import Alignment
+        for row in sheet:
+            for cell in row: cell.alignment=Alignment(wrap_text=True,vertical='top')
+        for index in range(2,6): sheet.row_dimensions[index].height=42
+
     return output.getvalue()

@@ -153,7 +153,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.respond(200,{'status':'ok'}) if self.path=='/api/qa/health' else self.respond(404,{'error':'not_found'})
     def do_POST(self):
-        if self.path not in ('/api/qa/check','/api/qa/report','/api/qa/assist'): return self.respond(404,{'error':'not_found'})
+        if self.path not in ('/api/qa/check','/api/qa/report','/api/qa/assist','/api/qa/prepare'): return self.respond(404,{'error':'not_found'})
         # No CORS; browsers may submit only same-origin JSON, never a cross-site form.
         if self.headers.get('Sec-Fetch-Site')=='cross-site': return self.respond(403,{'error':'origin'})
         if self.headers.get('Content-Type','').split(';')[0]!='application/json': return self.respond(415,{'error':'content_type'})
@@ -162,7 +162,12 @@ class Handler(BaseHTTPRequestHandler):
             if not 0<length<=MAX_BODY: return self.respond(413,{'error':'body_limit'})
             self.connection.settimeout(30)
             payload=json.loads(self.rfile.read(length))
-            if self.path=='/api/qa/assist':
+            if self.path=='/api/qa/prepare':
+                if not isinstance(payload,dict) or payload.get('action')!='prepare' or set(payload)-{'action','rows','files'}:
+                    raise InputError('invalid_request')
+                rows=read_rows(payload)
+                result={'version':'ltli-qa-input-1','total':len(rows),'rows':rows}
+            elif self.path=='/api/qa/assist':
                 validate_request(payload)
                 rows=read_rows(payload) if ('rows' in payload or payload.get('files')) else []
                 result=coordinate(payload,rows,execute)
