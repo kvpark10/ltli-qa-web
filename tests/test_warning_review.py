@@ -41,6 +41,21 @@ class WarningReviewTests(unittest.TestCase):
         result=review(result,{'operation':'restore','row_id':1,'issue':'Number mismatch','fingerprint':row['fingerprint']})
         self.assertEqual(result['accepted_count'],0);self.assertIn('Number mismatch',result['rows'][0]['active_issues'])
         self.assertEqual(ROWS,original)
+    def test_multiple_warning_decisions_restore_in_sequence(self):
+        rows=[{'source':'Save 2 files to {folder}.','target':'파일 3개를 저장하세요.'}]
+        result=execute({'action':'qa','rows':rows})
+        issues=list(result['rows'][0]['issues'])
+        self.assertEqual(len(issues),3)
+        for operation in ('accept','restore'):
+            for index,issue in enumerate(issues,1):
+                result=execute({'action':'qa','rows':rows,'decisions':result['decisions']})
+                result=review(result,{'operation':operation,'row_id':1,'issue':issue,
+                                     'fingerprint':result['rows'][0]['fingerprint']})
+                expected=index if operation=='accept' else len(issues)-index
+                self.assertEqual(result['accepted_count'],expected)
+        self.assertEqual(result['rows'][0]['active_issues'],issues)
+        self.assertEqual(result['decisions'],[])
+
     def test_content_changes_invalidate_decision_and_old_action(self):
         result=accept(execute({'action':'qa','rows':ROWS}));old=deepcopy(result)
         changed=[{'source':ROWS[0]['source'],'target':'파일 4개를 저장하세요.'}]
@@ -82,3 +97,4 @@ class WarningReviewTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError) as e:post('review',action)
             self.assertEqual(e.exception.code,409)
         finally:server.shutdown();server.server_close();thread.join()
+
