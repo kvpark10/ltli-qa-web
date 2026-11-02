@@ -9,7 +9,7 @@ import smtplib
 import ssl
 import threading
 
-RECIPIENT='contacts@ltli.kr'
+RECIPIENT='contact@ltli.kr'
 _EVENTS=queue.Queue(maxsize=100)
 _LOCK=threading.Lock()
 _WORKER=None
