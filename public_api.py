@@ -5,6 +5,8 @@ import io
 import json
 import os
 import threading
+import time
+from google_sheets_storage import record_qa
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
@@ -165,11 +167,16 @@ class Handler(BaseHTTPRequestHandler):
         # No CORS; browsers may submit only same-origin JSON, never a cross-site form.
         if self.headers.get('Sec-Fetch-Site')=='cross-site': return self.respond(403,{'error':'origin'})
         if self.headers.get('Content-Type','').split(';')[0]!='application/json': return self.respond(415,{'error':'content_type'})
+        started=time.perf_counter()
+        log_check=False
+        outcome='failed'
+        metrics={}
         try:
             length=int(self.headers.get('Content-Length','0'))
             if not 0<length<=MAX_BODY: return self.respond(413,{'error':'body_limit'})
             self.connection.settimeout(30)
             payload=json.loads(self.rfile.read(length))
+            log_check=(self.path=='/api/qa/check' and isinstance(payload,dict) and 'explain_id' not in payload)
             if self.path=='/api/qa/prepare':
                 if not isinstance(payload,dict) or payload.get('action')!='prepare' or set(payload)-{'action','rows','files'}:
                     raise InputError('invalid_request')
@@ -187,6 +194,9 @@ class Handler(BaseHTTPRequestHandler):
                 rows=read_rows(payload) if ('rows' in payload or payload.get('files')) else []
                 result=coordinate(payload,rows,execute)
             else: result=execute(payload)
+            outcome='success'
+            if log_check:
+                metrics={'segments':result['total'],'warnings':sum(len(r['issues']) for r in result['rows'])}
             if self.path=='/api/qa/report':
                 frame=pd.DataFrame([{'Segment':r['id'],'Source':r['source'],'Target':r['target'],
                                      'QA Issues':'; '.join(r['issues']),'Active QA Issues':'; '.join(r['active_issues']),
@@ -210,6 +220,9 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError,UnicodeError,TimeoutError): self.respond(400,{'error':'invalid_request'})
         except (BrokenPipeError,ConnectionResetError): pass
         except Exception: self.respond(500,{'error':'processing_failed'})
+        finally:
+            if log_check:
+                record_qa(outcome, int((time.perf_counter()-started)*1000), **metrics)
 
 class BoundedServer(ThreadingHTTPServer):
     daemon_threads=True
