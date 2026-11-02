@@ -7,6 +7,7 @@ import os
 import threading
 import time
 from google_sheets_storage import record_qa
+from qa_notifications import notify_qa
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
@@ -222,7 +223,9 @@ class Handler(BaseHTTPRequestHandler):
         except Exception: self.respond(500,{'error':'processing_failed'})
         finally:
             if log_check:
-                record_qa(outcome, int((time.perf_counter()-started)*1000), **metrics)
+                elapsed_ms=int((time.perf_counter()-started)*1000)
+                record_qa(outcome, elapsed_ms, **metrics)
+                if outcome=='success':notify_qa(elapsed_ms, **metrics)
 
 class BoundedServer(ThreadingHTTPServer):
     daemon_threads=True
