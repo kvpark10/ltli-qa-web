@@ -10,7 +10,7 @@ class NotificationTests(unittest.TestCase):
     def test_fixed_recipient_and_minimal_body(self):
         event={'completed_at':'2026-11-02T00:00:00+00:00','elapsed_ms':30,'segments':2,'warnings':1}
         message=notifications.build_message(event,'sender@example.com')
-        self.assertEqual(message['To'],'contact@ltli.kr')
+        self.assertEqual(message['To'],'kvpark10@naver.com')
         self.assertIn('검사 구간 수: 2',message.get_content())
         self.assertNotIn('source',message.get_content())
         with self.assertRaises(ValueError):notifications.build_message(event,'bad\nBcc: other@example.com')
@@ -22,7 +22,7 @@ class NotificationTests(unittest.TestCase):
             smtp=client.return_value.__enter__.return_value
             smtp.starttls.assert_called_once()
             smtp.login.assert_called_once_with('sender@example.com','test-secret')
-            self.assertEqual(smtp.send_message.call_args.kwargs['to_addrs'],['contact@ltli.kr'])
+            self.assertEqual(smtp.send_message.call_args.kwargs['to_addrs'],['kvpark10@naver.com'])
     def test_disabled_invalid_and_full_queue_are_nonblocking(self):
         with patch.dict(os.environ,{'LTLI_QA_EMAIL_ENABLED':'0'}),patch.object(notifications._EVENTS,'put_nowait') as put:
             notifications.notify_qa(1,segments=2,warnings=0);put.assert_not_called()
