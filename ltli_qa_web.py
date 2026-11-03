@@ -157,7 +157,7 @@ hero_html = (
             #fbfcff;
         color: var(--ltli-navy);
     }
-    .block-container {max-width: 1180px; padding-top: 2rem; padding-bottom: 4rem;}
+    .block-container {max-width: 1180px; padding-top: 5.5rem; padding-bottom: 4rem;}
     .ltli-hero {
         position: relative; overflow: hidden; padding: 2.25rem 2.4rem;
         border: 1px solid rgba(255,255,255,.65); border-radius: 28px;
@@ -193,7 +193,7 @@ hero_html = (
     .ltli-footer {text-align:center; color:#748098; font-size:.78rem; margin-top:2.5rem;}
     .ltli-feedback-callout {margin:1rem 0; padding:1rem 1.15rem; border-radius:16px; color:#24376b; font-weight:700; background:linear-gradient(110deg,#eef3ff,#f4edff); border:1px solid #cdd8ff; box-shadow:0 8px 24px rgba(49,87,226,.08);}
     @media (max-width: 700px) {
-        .block-container {padding-top:1rem;}
+        .block-container {padding-top:5rem;}
         .ltli-hero {padding:1.6rem 1.3rem; border-radius:22px;}
         .ltli-steps {grid-template-columns:1fr;}
     }
