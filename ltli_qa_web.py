@@ -27,7 +27,7 @@ st.set_page_config(
 
 LANGUAGE = {
     "ko": {
-        "hero_title": "반복적인 번역 검사를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
+        "hero_title": "반복적인 번역 QA를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
         "brand_name": "LTLI · 언어와 기술의 연결", "public_beta": "LTLI QA", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
         "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "14개 QA 검사 실행", "step2_text": "숫자, 태그, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
         "policy": "🔒 업로드 전 확인 — 파일 업로드 및 데이터 보호 안내", "policy_text": "공개 가능한 자료만 업로드하시기 바랍니다. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
@@ -91,7 +91,22 @@ if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
 language_labels = {"한국어": "ko", "English": "en"}
-selected_label = st.selectbox("Language / 언어", list(language_labels), index=0 if st.session_state["ui_language"] == "ko" else 1)
+with st.container(key="qa_language_selector"):
+    selected_label = st.selectbox(
+        "Language / 언어",
+        list(language_labels),
+        index=0 if st.session_state["ui_language"] == "ko" else 1,
+        label_visibility="collapsed",
+        width=150,
+    )
+st.markdown("""
+<style>
+.st-key-qa_language_selector { width: 150px; max-width: 100%; margin-left: auto; }
+.st-key-qa_language_selector [data-baseweb="select"] > div {
+    min-height: 36px; border-radius: 10px; font-size: 0.875rem;
+}
+</style>
+""", unsafe_allow_html=True)
 selected_language = language_labels[selected_label]
 if selected_language != st.session_state["ui_language"]:
     st.session_state["ui_language"] = selected_language
