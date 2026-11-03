@@ -91,7 +91,22 @@ if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
 language_labels = {"한국어": "ko", "English": "en"}
-selected_label = st.selectbox("Language / 언어", list(language_labels), index=0 if st.session_state["ui_language"] == "ko" else 1)
+with st.container(key="qa_language_selector"):
+    selected_label = st.selectbox(
+        "Language / 언어",
+        list(language_labels),
+        index=0 if st.session_state["ui_language"] == "ko" else 1,
+        label_visibility="collapsed",
+        width=150,
+    )
+st.markdown("""
+<style>
+.st-key-qa_language_selector { width: 150px; max-width: 100%; margin-left: auto; }
+.st-key-qa_language_selector [data-baseweb="select"] > div {
+    min-height: 36px; border-radius: 10px; font-size: 0.875rem;
+}
+</style>
+""", unsafe_allow_html=True)
 selected_language = language_labels[selected_label]
 if selected_language != st.session_state["ui_language"]:
     st.session_state["ui_language"] = selected_language
