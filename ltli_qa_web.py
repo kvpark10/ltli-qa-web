@@ -2,6 +2,7 @@ from qa_engine import (
     normalize_text, compare_items, normalize_term, contains_source_term, contains_approved_target, check_terminology, extract_numbers, extract_end_punctuation, extract_tags, extract_placeholders, extract_brackets, check_balanced_brackets, extract_urls, extract_emails, check_whitespace_issues, extract_file_names, extract_shortcuts, extract_units, run_qa_check, convert_dataframe_to_excel
 )
 import io
+import json
 from pathlib import Path
 import re
 import time
@@ -81,21 +82,34 @@ LANGUAGE = {
     "en": {}
 }
 
-query_language = str(st.query_params.get("lang", "")).lower()
+LANGUAGE.update(json.loads((Path(__file__).parent / "qa_ui_zh.json").read_text(encoding="utf-8")))
+
+def normalize_ui_language(value):
+    value = str(value).lower().replace("_", "-")
+    if value.startswith("zh"):
+        parts = value.split("-")
+        if "hans" in parts:
+            return "zh-Hans"
+        if "hant" in parts or any(p in parts for p in ("tw", "hk", "mo")):
+            return "zh-Hant"
+        return "zh-Hans"
+    return "ko" if value.startswith("ko") else "en"
+
+query_language = str(st.query_params.get("lang", ""))
 try:
     browser_language = str(getattr(st.context, "locale", "en")).lower()
 except (AttributeError, RuntimeError):
     browser_language = "en"
-detected_language = query_language if query_language in {"ko", "en"} else ("ko" if browser_language.startswith("ko") else "en")
+detected_language = normalize_ui_language(query_language or browser_language)
 if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
-language_labels = {"한국어": "ko", "English": "en"}
+language_labels = {"한국어": "ko", "English": "en", "简体中文": "zh-Hans", "繁體中文": "zh-Hant"}
 with st.container(key="qa_language_selector"):
     selected_label = st.selectbox(
         "Language / 언어",
         list(language_labels),
-        index=0 if st.session_state["ui_language"] == "ko" else 1,
+        index=list(language_labels.values()).index(normalize_ui_language(st.session_state["ui_language"])),
         label_visibility="collapsed",
         width=150,
     )
@@ -226,7 +240,7 @@ for source, target in {
     hero_html = hero_html.replace(source, target)
 st.markdown(hero_html, unsafe_allow_html=True)
 
-guide_title, guide_steps = GUIDE[UI_LANGUAGE]
+guide_title, guide_steps = GUIDE.get(UI_LANGUAGE, GUIDE["en"])
 with st.expander(guide_title, expanded=False):
     for step in guide_steps:
         st.write(step)
