@@ -9,17 +9,15 @@ import time
 from google_sheets_storage import record_qa
 from qa_notifications import notify_qa
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
 from openpyxl import load_workbook
 from qa_engine import run_qa_check, convert_dataframe_to_excel
 from qa_localization import MESSAGES, localized_explanation
-from qa_workbooks import GLOSSARY_SHEET, GLOSSARY_HEADER, localized_report, sample_workbook
+from qa_workbooks import GLOSSARY_SHEET, GLOSSARY_HEADER, SAMPLES, localized_report, report_filename, sample_workbook
 import pandas as pd
 from qa_findings import annotate, review, ReviewError
 
-SAMPLES = json.loads(Path(__file__).with_name("qa_samples.json").read_text(encoding="utf-8"))
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 MAX_FILE = 10 * 1024 * 1024
@@ -263,7 +261,7 @@ class Handler(BaseHTTPRequestHandler):
                 result=execute({key:value for key,value in payload.items() if key!='report_language'})
                 if sum(len(row['issues']) for row in result['rows'])>25000:
                     raise InputError('report_limit')
-                return self.workbook_response(localized_report(result,language),'LTLI-QA-report.xlsx')
+                return self.workbook_response(localized_report(result,language),report_filename(language))
             else: result=execute(payload)
             outcome='success'
             if log_check:

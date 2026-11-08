@@ -1,6 +1,7 @@
 from base64 import b64encode
 from io import BytesIO
 import json
+import re
 import threading
 import unittest
 from unittest.mock import patch
@@ -48,6 +49,11 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                         prepared=json.load(response)
                     self.assertEqual(prepared['rows'],sample['rows'])
                     self.assertEqual(prepared['glossary'],sample['glossary'])
+                    for row in prepared['rows']:
+                        self.assertEqual(bool(re.search('[가-힣]', row['source'])), lang == 'en')
+                        if row['target']:
+                            self.assertEqual(bool(re.search('[가-힣]', row['target'])), lang == 'ko')
+                            self.assertEqual(bool(re.search('[一-鿿]', row['target'])), lang.startswith('zh-'))
                     with post('check',{'action':'qa','files':files,'explain_id':1,'language':lang}) as response:
                         result=json.load(response)
                     actual=[{issue.split(':')[0] for issue in row['issues']} for row in result['rows']]
@@ -58,6 +64,7 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                     literal={'source':'=公式保留／원문','target':'+ＱＡ 文件'}
                     with post('report',{'action':'qa','report_language':lang,'rows':[*sample['rows'],literal],
                                         'glossary':sample['glossary']}) as response:
+                        self.assertIn(f"LTLI-QA-report-{lang}.xlsx", response.headers["Content-Disposition"])
                         book=load_workbook(BytesIO(response.read()))
                     copy=MESSAGES[lang]
                     self.assertEqual(book.properties.title,copy['title'])

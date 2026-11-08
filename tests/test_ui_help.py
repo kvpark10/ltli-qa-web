@@ -62,8 +62,18 @@ class UiHelpTests(unittest.TestCase):
             self.assertEqual(download.proto.label, 'Excel 보고서 다운로드 ↓')
             from test_localization import load_helpers
             helpers, _ = load_helpers()
-            convert_dataframe_to_excel = helpers['convert_dataframe_to_excel']
-            exported = pd.read_excel(io.BytesIO(convert_dataframe_to_excel(results)))
-            self.assertEqual(exported['Source'].tolist(), results['Source'].tolist())
+            from qa_workbooks import localized_report
+            from qa_localization import messages
+            report = helpers["report_from_frames"](results, 1, False)
+            for locale in ("ko", "zh-TW"):
+                copy = messages(locale)
+                exported = pd.read_excel(io.BytesIO(localized_report(report, locale)), sheet_name=copy["results"])
+                self.assertEqual(exported[copy["source"]].tolist(), results["Source"].tolist())
+                self.assertEqual(exported[copy["target"]].tolist(), results["Target"].tolist())
+            # Changing presentation language keeps the uploaded content and QA result.
+            app.selectbox[0].select("繁體中文").run()
+            self.assertFalse(app.exception)
+            pd.testing.assert_frame_equal(app.session_state["qa_result_dataframe"], results)
+            self.assertNotEqual(download.proto.url, app.get("download_button")[-1].proto.url)
 
 

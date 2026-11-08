@@ -16,6 +16,9 @@ def issue_details(issue, language):
     code, _, detail = issue.partition(': ')
     copy = messages(language)
     name, description = copy['issues'].get(code, (copy['unknown'], copy['fallback']))
+    if code == "Whitespace warning" and detail:
+        labels = copy["whitespace_details"]
+        detail = ", ".join(labels.get(item, item) for item in detail.split(", "))
     return code, name, description, detail
 
 

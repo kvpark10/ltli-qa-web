@@ -1,6 +1,7 @@
 from qa_engine import (
-    normalize_text, compare_items, normalize_term, contains_source_term, contains_approved_target, check_terminology, extract_numbers, extract_end_punctuation, extract_tags, extract_placeholders, extract_brackets, check_balanced_brackets, extract_urls, extract_emails, check_whitespace_issues, extract_file_names, extract_shortcuts, extract_units, run_qa_check, convert_dataframe_to_excel
+    normalize_text, compare_items, normalize_term, contains_source_term, contains_approved_target, check_terminology, extract_numbers, extract_end_punctuation, extract_tags, extract_placeholders, extract_brackets, check_balanced_brackets, extract_urls, extract_emails, check_whitespace_issues, extract_file_names, extract_shortcuts, extract_units, run_qa_check
 )
+from hashlib import sha256
 import io
 import json
 from pathlib import Path
@@ -11,6 +12,9 @@ from collections import Counter
 import pandas as pd
 import streamlit as st
 from docx import Document
+from public_api import RULES, workbook_glossary
+from qa_localization import issue_details, messages
+from qa_workbooks import GLOSSARY_SHEET, SAMPLES, localized_report, report_filename, sample_workbook
 from qa_help import help_for, notice_for, GUIDE
 
 from telemetry import (
@@ -56,7 +60,7 @@ LANGUAGE = {
         'lines': '줄',
         'checks_description': '번역 누락, 원문과 동일한 번역, 숫자, 구두점, 태그, 자리표시자, 괄호, URL, 이메일, 공백, 파일명, 단축키, 단위를 검사합니다. 자동 QA는 최종 언어 검수를 대체하지 않습니다.',
         'downloads_title': '📥 샘플 파일 및 빈 템플릿 다운로드',
-        'downloads_help': 'Excel 샘플은 원문과 번역문이 포함된 하나의 파일입니다. Word 샘플은 원문과 번역문을 각각 다운로드하여 함께 업로드하세요. 샘플에는 가상 데이터와 의도적인 QA 오류가 포함되어 있습니다.',
+        'downloads_help': 'Excel 샘플에는 가상의 원문·번역문과 의도적인 QA 오류가 포함되어 있습니다.',
         'sample_label': '테스트용 샘플 파일',
         'template_label': '작성용 빈 템플릿',
         'download_xlsx': '⬇ Excel (.xlsx)',
@@ -132,25 +136,38 @@ UI_LANGUAGE = st.session_state["ui_language"]
 def L(key, english):
     return LANGUAGE.get(UI_LANGUAGE, {}).get(key, english)
 
-ISSUE_LABELS_KO = {'Missing translation': '번역 누락', 'Source and target are identical': '원문과 번역문 동일', 'Number mismatch': '숫자 불일치', 'Punctuation mismatch': '구두점 불일치', 'Tag mismatch': '태그 불일치', 'Placeholder mismatch': '자리표시자 불일치', 'Bracket mismatch': '괄호 불일치', 'Unbalanced target brackets': '번역문 괄호 짝 불일치', 'URL mismatch': 'URL 불일치', 'Email mismatch': '이메일 불일치', 'Whitespace warning': '공백 주의', 'File name mismatch': '파일명 불일치', 'Shortcut mismatch': '단축키 불일치', 'Unit mismatch': '단위 불일치', 'Terminology mismatch': '용어 불일치', 'Leading space': '앞쪽 공백', 'Trailing space': '뒤쪽 공백', 'Multiple spaces': '연속 공백', 'Tab character': '탭 문자'}
+WORKBOOK_LOCALE = {"zh-Hans": "zh-CN", "zh-Hant": "zh-TW"}.get(UI_LANGUAGE, UI_LANGUAGE)
 
-def localized_results(frame):
-    """Translate presentation copies; preserve reports, rule IDs, and analytics."""
-    if UI_LANGUAGE != "ko":
-        return frame
+
+def localized_results(frame, language):
+    copy = messages(language)
     display = frame.copy()
-    def translate(value):
-        if not isinstance(value, str):
-            return value
-        for english, korean in ISSUE_LABELS_KO.items():
-            value = value.replace(english, korean)
-        return value
-    for column in ("QA Issues", "Issue Type"):
-        if column in display:
-            display[column] = display[column].map(translate)
+    if "QA Issues" in display:
+        def describe(issues):
+            parts = [issue_details(issue, language) for issue in issues]
+            return "; ".join(f"{name}: {detail}" if detail else name for _, name, _, detail in parts)
+        display["QA Issues"] = display["QA Issues"].map(describe)
+    if "Issue Type" in display:
+        display["Issue Type"] = display["Issue Type"].map(lambda issue: issue_details(issue, language)[1])
     if "QA Result" in display:
-        display["QA Result"] = display["QA Result"].replace({"Pass": "통과", "Error": "검토 필요"})
-    return display.rename(columns={"Segment": "세그먼트", "Source": "원문", "Target": "번역문", "QA Issues": "검출 사항", "QA Result": "검사 결과", "Issue Type": "문제 유형", "Count": "건수"})
+        display["QA Result"] = display["QA Result"].replace({"Pass": copy["clear"], "Error": copy["review"]})
+    columns = {"Segment": "segment", "Source": "source", "Target": "target",
+               "QA Issues": "findings", "QA Result": "status", "Issue Type": "issue", "Count": "count"}
+    return display.rename(columns={column: copy[key] for column, key in columns.items()})
+
+
+def report_from_frames(frame, error_count, glossary_used):
+    extra_columns = frame.columns.difference(["Segment", "Source", "Target", "QA Issues", "QA Result"], sort=False).tolist()
+    rows = []
+    for index, record in enumerate(frame.to_dict("records"), 1):
+        issues = record["QA Issues"]
+        rows.append({"id": record.get("Segment", index),
+                     "source": record["Source"], "target": record["Target"],
+                     "issues": issues, "active_issues": issues, "accepted_issues": [],
+                     "metadata": [record[column] for column in extra_columns]})
+    checks = [rule for rule in RULES if rule != "terminology" or glossary_used]
+    return {"rows": rows, "checks": checks, "total": len(rows), "flagged": error_count,
+            "accepted_count": 0, "decisions": [], "metadata_columns": extra_columns}
 
 
 hero_html = (
@@ -586,41 +603,32 @@ with st.expander(
     st.caption(
         L(
             "downloads_help",
-            "The Excel sample is one bilingual file. For Word, download both source and target files and upload them together. Samples contain fictional data and intentional QA issues.",
+            "The bilingual Excel sample contains fictional data and intentional QA issues.",
         )
     )
-    for item_type, heading in [
-        ("sample", L("sample_label", "Sample files · ready to test")),
-        ("template", L("template_label", "Blank templates · add your own content")),
-    ]:
-        st.markdown(f"**{heading}**")
-        excel_col, source_col, target_col = st.columns(3)
-        items = [
-            (excel_col, f"LTLI_QA_{item_type}.xlsx", L("download_xlsx", "⬇ Excel (.xlsx)")),
-            (source_col, f"LTLI_QA_{item_type}_source.docx", L("download_source", "⬇ Word source (.docx)")),
-            (target_col, f"LTLI_QA_{item_type}_target.docx", L("download_target", "⬇ Word target (.docx)")),
-        ]
-        for column, filename, label in items:
-            filepath = downloads_dir / filename
-            with column:
-                if filepath.is_file():
-                    st.download_button(
-                        label=label,
-                        data=filepath.read_bytes(),
-                        file_name=filename,
-                        mime=(
-                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            if filename.endswith(".xlsx")
-                            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        ),
-                        key=f"qa_download_{item_type}_{filename}",
-                        help=help_for(item_type, UI_LANGUAGE),
-                        use_container_width=True,
-                    )
-                else:
-                    st.caption(
-                        L("downloads_unavailable", "File Not Available")
-                    )
+    st.download_button(
+        label=messages(WORKBOOK_LOCALE)["sample_download"],
+        data=sample_workbook(SAMPLES[WORKBOOK_LOCALE]),
+        file_name=f"ltli_qa_sample_{WORKBOOK_LOCALE}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="qa_localized_sample_download",
+        on_click="ignore",
+    )
+    st.markdown(f"**{L('template_label', 'Blank templates · add your own content')}**")
+    for column, (filename, label) in zip(st.columns(3), [
+        ("LTLI_QA_template.xlsx", L("download_xlsx", "⬇ Excel (.xlsx)")),
+        ("LTLI_QA_template_source.docx", L("download_source", "⬇ Word source (.docx)")),
+        ("LTLI_QA_template_target.docx", L("download_target", "⬇ Word target (.docx)")),
+    ]):
+        filepath = downloads_dir / filename
+        with column:
+            if filepath.is_file():
+                st.download_button(
+                    label=label, data=filepath.read_bytes(), file_name=filename,
+                    help=help_for("template", UI_LANGUAGE), use_container_width=True,
+                )
+            else:
+                st.caption(L("downloads_unavailable", "File Not Available"))
     st.caption(
         L(
             "template_help",
@@ -665,6 +673,7 @@ else:
     input_mode = None
 
 alignment_metadata = None
+glossary = []
 
 if input_mode is None:
     st.info(L("begin", "Choose a tab above and upload your file(s) to begin."), icon="👆")
@@ -676,7 +685,10 @@ elif input_mode == "Bilingual XLSX":
 
     try:
         validate_file_size(uploaded_file)
-        dataframe = pd.read_excel(uploaded_file)
+        with pd.ExcelFile(uploaded_file, engine="openpyxl") as excel:
+            dataframe = pd.read_excel(excel, keep_default_na=False, dtype=str)
+            if GLOSSARY_SHEET in excel.sheet_names:
+                glossary = workbook_glossary(excel.book[GLOSSARY_SHEET])
     except Exception as error:
         track_event("qa_failed", {"stage": "file_read", "error_type": type(error).__name__})
         st.error(L('file_read_failed', 'Failed to read the file. Check the format and file size (up to 10 MB).'))
@@ -732,10 +744,12 @@ else:
 file_formats = [get_file_extension(item).upper() for item in analytics_files]
 size_buckets = [file_size_bucket(getattr(item, "size", None)) for item in analytics_files]
 upload_event_key = "|".join([input_mode, *file_formats, *size_buckets])
-if st.session_state.get("active_upload_key") != upload_event_key:
+# Use content identity for results. Similar-sized uploads are separate work.
+result_input_key = (input_mode, *(sha256(item.getbuffer()).digest() for item in analytics_files))
+if st.session_state.get("qa_result_input_key") != result_input_key:
     for result_key in ("qa_result_dataframe", "qa_error_dataframe", "qa_issue_summary"):
         st.session_state.pop(result_key, None)
-    st.session_state["active_upload_key"] = upload_event_key
+    st.session_state["qa_result_input_key"] = result_input_key
 track_once(
     f"file_uploaded_{upload_event_key}",
     "file_uploaded",
@@ -750,7 +764,7 @@ st.markdown(f'<div class="ltli-section">{L("review", "2. Review and run QA")}</d
 st.caption(f"{len(dataframe):,}{L('ready', ' aligned segment(s) are ready. Confirm the preview, then start the check.')}")
 
 st.dataframe(
-    localized_results(dataframe),
+    localized_results(dataframe, WORKBOOK_LOCALE),
     use_container_width=True,
     hide_index=True
 )
@@ -780,28 +794,29 @@ issue_types = [
     "Whitespace warning",
     "File name mismatch",
     "Shortcut mismatch",
-    "Unit mismatch"
+    "Unit mismatch",
 ]
+if glossary:
+    issue_types.append("Terminology mismatch")
 
 if run_requested:
     qa_started_at = time.perf_counter()
-    qa_metadata = {"input_mode": input_mode, "glossary_used": False, "segment_count": len(dataframe)}
+    qa_metadata = {"input_mode": input_mode, "glossary_used": bool(glossary), "segment_count": len(dataframe)}
     track_event("qa_started", qa_metadata)
     try:
         result_dataframe = dataframe.copy()
         result_dataframe["QA Issues"] = result_dataframe.apply(
-            lambda row: run_qa_check(row["Source"], row["Target"]), axis=1
+            lambda row: run_qa_check(row["Source"], row["Target"], glossary), axis=1
         )
         result_dataframe["QA Result"] = result_dataframe["QA Issues"].apply(
             lambda issues: "Pass" if not issues else "Error"
         )
-        result_dataframe["QA Issues"] = result_dataframe["QA Issues"].apply(
-            lambda issues: ", ".join(issues)
-        )
         error_dataframe = result_dataframe[result_dataframe["QA Result"] == "Error"].copy()
+        counts = Counter(code for issues in result_dataframe["QA Issues"]
+                         for code in {issue.partition(": ")[0] for issue in issues})
         issue_summary = pd.DataFrame({
             "Issue Type": issue_types,
-            "Count": [int(result_dataframe["QA Issues"].str.contains(issue, regex=False).sum()) for issue in issue_types],
+            "Count": [counts[issue] for issue in issue_types],
         })
         st.session_state["qa_result_dataframe"] = result_dataframe
         st.session_state["qa_error_dataframe"] = error_dataframe
@@ -837,13 +852,13 @@ if "qa_result_dataframe" in st.session_state:
     st.info(notice_for('results', UI_LANGUAGE))
     st.markdown(L("overview", "#### Issue overview"))
     st.caption(notice_for("summary", UI_LANGUAGE))
-    st.dataframe(localized_results(issue_summary), use_container_width=True, hide_index=True)
+    st.dataframe(localized_results(issue_summary, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
     st.markdown(L("all_segments", "#### All segments"))
-    st.dataframe(localized_results(result_dataframe), use_container_width=True, hide_index=True)
+    st.dataframe(localized_results(result_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
     if error_count:
         st.error(L('issue_count', '{count} segment(s) contain QA issues.').format(count=error_count))
         st.markdown(L("review_issues", "#### Issues requiring review"))
-        st.dataframe(localized_results(error_dataframe), use_container_width=True, hide_index=True)
+        st.dataframe(localized_results(error_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
     else:
         st.success(L("no_issues", "No QA issues were found."))
 
@@ -854,8 +869,8 @@ if "qa_result_dataframe" in st.session_state:
     st.download_button(
         help=help_for("report", UI_LANGUAGE),
         label=L("download", "Download Excel report  ↓"),
-        data=convert_dataframe_to_excel(result_dataframe),
-        file_name="ltli_qa_results.xlsx",
+        data=localized_report(report_from_frames(result_dataframe, error_count, bool(glossary)), WORKBOOK_LOCALE),
+        file_name=report_filename(WORKBOOK_LOCALE),
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         on_click=record_report_download,
         use_container_width=True,
