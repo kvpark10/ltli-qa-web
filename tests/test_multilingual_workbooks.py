@@ -40,9 +40,11 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                 with self.subTest(lang=lang):
                     request={'action':'sample','language':lang}
                     with post('prepare',request) as response:
+                        self.assertEqual(response.headers['Content-Language'],lang)
                         self.assertEqual(json.load(response)['rows'],sample['rows'])
                     with post('prepare',{**request,'format':'xlsx'}) as response:
                         filename=f'ltli_qa_sample_{lang}.xlsx'
+                        self.assertEqual(response.headers['Content-Language'],lang)
                         self.assertIn(filename,response.headers['Content-Disposition'])
                         files=[{'name':filename,'data':b64encode(response.read()).decode()}]
                     with post('prepare',{'action':'prepare','files':files}) as response:
@@ -65,12 +67,26 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                     with post('report',{'action':'qa','report_language':lang,'rows':[*sample['rows'],literal],
                                         'glossary':sample['glossary']}) as response:
                         self.assertIn(f"LTLI-QA-report-{lang}.xlsx", response.headers["Content-Disposition"])
+                        self.assertEqual(response.headers["Content-Language"], lang)
+                        self.assertEqual(response.headers["Cache-Control"], "no-store")
                         book=load_workbook(BytesIO(response.read()))
                     copy=MESSAGES[lang]
                     self.assertEqual(book.properties.title,copy['title'])
                     self.assertEqual(book.properties.language,lang)
                     self.assertIn(copy['generated'],[cell.value for cell in book[copy['summary']]['A']])
+                    self.assertEqual(book.sheetnames, [copy['summary'],copy['results'],copy['findings']])
+                    self.assertEqual(dict(book[copy['summary']].values)[copy['scope']], copy['scope_note'])
                     sheet=book[copy['results']]
+                    self.assertEqual(tuple(cell.value for cell in sheet[1]),
+                                     tuple(copy[k] for k in ('segment','source','target','status')))
+                    findings = book[copy['findings']]
+                    self.assertEqual(findings['F2'].value,copy['issues']['Number mismatch'][1])
+                    self.assertEqual(findings['E2'].value,copy['review'])
+                    if lang == 'zh-TW':
+                        self.assertIn('團隊雲端硬碟',sheet['C2'].value)
+                        self.assertIn('手機號碼',' '.join(
+                            str(cell.value or '') for cell in findings['G']))
+
                     self.assertEqual(sheet['B2'].value,sample['rows'][0]['source'])
                     self.assertEqual(sheet['C2'].value,sample['rows'][0]['target'])
                     self.assertEqual(sheet['B6'].value,literal['source'])
@@ -79,6 +95,16 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                     self.assertEqual(sheet['B1'].font.name,FONTS[lang])
                     self.assertIn(copy['issues']['Terminology mismatch'][0],[c.value for c in book[copy['findings']]['C']])
                     book.close()
+            # The old UI submitted exactly this payload without a report locale.
+            for locale in ({}, {'report_language':'zh-Hant'}):
+                with self.assertRaises(HTTPError) as legacy:
+                    post('report', {'action':'qa','rows':[
+                        {'source':'Save 2 files to {folder}.','target':'파일 3개를 저장하세요.'},
+                        {'source':'Welcome.','target':'환영합니다.'},
+                    ], **locale})
+                with legacy.exception as response:
+                    self.assertEqual(response.code,400)
+                    self.assertEqual(json.load(response),{'error':'report_language'})
             with self.assertRaises(HTTPError) as rejected:
                 post('assist',{'action':'assist','consent':True})
             self.assertEqual(rejected.exception.code,403)

@@ -77,3 +77,43 @@ class UiHelpTests(unittest.TestCase):
             self.assertNotEqual(download.proto.url, app.get("download_button")[-1].proto.url)
 
 
+    def test_streamlit_downloads_real_workbooks_in_each_selected_locale(self):
+        from openpyxl import load_workbook
+        import streamlit as st
+        from qa_localization import messages
+
+        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        for ui, locale in [('ko','ko'), ('en','en'), ('zh-Hans','zh-CN'), ('zh-Hant','zh-TW')]:
+            with self.subTest(locale=locale), patch.dict(sys.modules, {'telemetry': telemetry_stub()}), \
+                    patch('qa_orchestrator.post', side_effect=AssertionError('provider called')) as provider, \
+                    patch.object(st, 'download_button', wraps=st.download_button) as downloads:
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / 'ltli_qa_web.py'), default_timeout=15)
+                app.query_params['lang'] = ui
+                app.run()
+                sample = next(call.kwargs for call in downloads.call_args_list
+                              if call.kwargs.get('key') == f'qa_localized_sample_download_{locale}')
+                self.assertEqual(sample['file_name'], f'ltli_qa_sample_{locale}.xlsx')
+                with io.BytesIO(sample['data']) as raw:
+                    book = load_workbook(raw)
+                    expected_rows = [(source or '', target or '') for source, target in list(book.active.values)[1:]]
+                    book.close()
+                app.file_uploader(key='bilingual_xlsx_uploader').set_value(
+                    (sample['file_name'], sample['data'], mime)).run()
+                app.button[0].click().run()
+                self.assertFalse(app.exception)
+                report = next(call.kwargs for call in downloads.call_args_list
+                              if call.kwargs.get('key') == f'qa_localized_report_{locale}')
+                self.assertEqual(report['file_name'], f'LTLI-QA-report-{locale}.xlsx')
+                book = load_workbook(io.BytesIO(report['data']))
+                copy = messages(locale)
+                self.assertEqual(book.properties.language, locale)
+                self.assertEqual(book.sheetnames, [copy['summary'], copy['results'], copy['findings']])
+                self.assertEqual(dict(book[copy['summary']].values)[copy['scope']], copy['scope_note'])
+                rows = list(book[copy['results']].values)
+                self.assertEqual(rows[0], tuple(copy[key] for key in ('segment', 'source', 'target', 'status')))
+                self.assertEqual([(row[1] or '', row[2] or '') for row in rows[1:]], expected_rows)
+                self.assertIn(copy['issues']['Number mismatch'][1], [c.value for c in book[copy['findings']]['F']])
+                if locale == 'zh-TW':
+                    self.assertIn('團隊雲端硬碟', rows[1][2])
+                book.close()
+                provider.assert_not_called()

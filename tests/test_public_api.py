@@ -1,3 +1,4 @@
+from qa_localization import MESSAGES
 import base64
 import importlib.util
 import io
@@ -60,12 +61,12 @@ class PublicApiTests(unittest.TestCase):
             request=urllib.request.Request(url+'/api/qa/check',data=json.dumps({'action':'qa','rows':[{'source':'Hello','target':''}]}).encode(),headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(request) as response:
                 self.assertEqual(response.headers['Cache-Control'],'no-store');self.assertEqual(json.load(response)['flagged'],1)
-            report=urllib.request.Request(url+'/api/qa/report',data=json.dumps({'action':'qa','rows':[{'source':'=SUM(A1:A2)','target':'@formula'}]}).encode(),headers={'Content-Type':'application/json'})
+            report=urllib.request.Request(url+'/api/qa/report',data=json.dumps({'action':'qa','report_language':'en','rows':[{'source':'=SUM(A1:A2)','target':'@formula'}]}).encode(),headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(report) as response:
                 from openpyxl import load_workbook
                 book=load_workbook(io.BytesIO(response.read()))
-                self.assertEqual(book.active['B2'].data_type,'s')
-                self.assertTrue(book.active['B2'].value.startswith("'="))
+                self.assertEqual(book[MESSAGES['en']['results']]['B2'].data_type,'s')
+                self.assertEqual(book[MESSAGES["en"]["results"]]["B2"].value, "=SUM(A1:A2)")
             request=urllib.request.Request(url+'/api/qa/translate',data=b'{}',headers={'Content-Type':'application/json'})
             with self.assertRaises(urllib.error.HTTPError) as e:urllib.request.urlopen(request)
             self.assertEqual(e.exception.code,404)
@@ -101,9 +102,9 @@ class PublicApiTests(unittest.TestCase):
                 self.assertEqual(accepted['accepted_count'],1)
                 with post('check',{**qa,'checks':['numbers'],'decisions':accepted['decisions']}) as output:
                     self.assertEqual(json.load(output)['decisions'],accepted['decisions'])
-                with post('report',{**qa,'decisions':accepted['decisions']}) as output:
+                with post('report',{**qa,'decisions':accepted['decisions'],'report_language':'en'}) as output:
                     workbook=load_workbook(io.BytesIO(output.read()))
-                    self.assertIn('雲端服務 → 云端服务',workbook.active['F2'].value)
+                    self.assertIn('雲端服務 → 云端服务',workbook[MESSAGES['en']['findings']]['G2'].value)
                     workbook.close()
                 with post('review',{**review,'operation':'restore','decisions':accepted['decisions']}) as output:
                     self.assertEqual(json.load(output)['flagged'],1)

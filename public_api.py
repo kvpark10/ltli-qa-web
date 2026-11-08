@@ -12,10 +12,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
 from openpyxl import load_workbook
-from qa_engine import run_qa_check, convert_dataframe_to_excel
+from qa_engine import run_qa_check
 from qa_localization import MESSAGES, localized_explanation
 from qa_workbooks import GLOSSARY_SHEET, GLOSSARY_HEADER, SAMPLES, localized_report, report_filename, sample_workbook
-import pandas as pd
 from qa_findings import annotate, review, ReviewError
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -192,17 +191,20 @@ def execute(payload):
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args): pass  # No content, filenames, IPs or behavioral analytics.
-    def respond(self,status,value):
+    def respond(self,status,value, *, language=None):
         body=json.dumps(value,ensure_ascii=False).encode()
         self.send_response(status)
         self.send_header('Content-Type','application/json; charset=utf-8')
+        if language:
+            self.send_header('Content-Language', language)
         self.send_header('Cache-Control','no-store')
         self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Content-Length',str(len(body)))
         self.end_headers();self.wfile.write(body)
-    def workbook_response(self, body, filename):
+    def workbook_response(self, body, filename, language):
         self.send_response(200)
         self.send_header('Content-Type',XLSX_MIME)
+        self.send_header('Content-Language',language)
         self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
         self.send_header('Cache-Control','no-store')
         self.send_header('X-Content-Type-Options','nosniff')
@@ -237,8 +239,8 @@ class Handler(BaseHTTPRequestHandler):
                         raise InputError('sample_request')
                     sample=SAMPLES[language]
                     if fmt=='xlsx':
-                        return self.workbook_response(sample_workbook(sample),f'ltli_qa_sample_{language}.xlsx')
-                    return self.respond(200,{'version':'ltli-qa-sample-1',**sample})
+                        return self.workbook_response(sample_workbook(sample),f'ltli_qa_sample_{language}.xlsx',language)
+                    return self.respond(200,{'version':'ltli-qa-sample-1',**sample},language=language)
                 if not isinstance(payload,dict) or payload.get('action')!='prepare' or set(payload)-{'action','rows','files'}:
                     raise InputError('invalid_request')
                 embedded=[]
@@ -254,27 +256,20 @@ class Handler(BaseHTTPRequestHandler):
                 glossary=read_glossary(payload)
                 for row in result['rows']:row['all_issues']=run_qa_check(row['source'],row['target'],glossary)
                 result=review(result,payload)
-            elif self.path=='/api/qa/report' and isinstance(payload,dict) and 'report_language' in payload:
-                language=payload['report_language']
+            elif self.path=='/api/qa/report':
+                # An older browser bundle omits the locale. Its UI language cannot be inferred.
+                language=payload.get('report_language') if isinstance(payload,dict) else None
                 if not isinstance(language,str) or language not in MESSAGES:
                     raise InputError('report_language')
                 result=execute({key:value for key,value in payload.items() if key!='report_language'})
                 if sum(len(row['issues']) for row in result['rows'])>25000:
                     raise InputError('report_limit')
-                return self.workbook_response(localized_report(result,language),report_filename(language))
+                return self.workbook_response(localized_report(result,language),report_filename(language),language)
             else: result=execute(payload)
             outcome='success'
             if log_check:
                 metrics={'segments':result['total'],'warnings':sum(len(r['issues']) for r in result['rows'])}
-            if self.path=='/api/qa/report':
-                frame=pd.DataFrame([{'Segment':r['id'],'Source':r['source'],'Target':r['target'],
-                                     'QA Issues':'; '.join(r['issues']),'Active QA Issues':'; '.join(r['active_issues']),
-                                     'User Accepted Issues':'; '.join(r['accepted_issues']),
-                                     'QA Result':'Review' if r['active_issues'] else 'User accepted warnings' if r['accepted_issues'] else 'No warning'}
-                                    for r in result['rows']])
-                body=convert_dataframe_to_excel(frame,decisions=result['decisions'])
-                self.workbook_response(body,'LTLI-QA-report.xlsx')
-            else: self.respond(200,result)
+            self.respond(200,result)
         except ReviewError as error: self.respond(409 if str(error)=='stale_review' else 400,{'error':str(error)})
         except InputError as error: self.respond(403 if str(error)=='qa_only' else 400,{'error':str(error)})
         except (ValueError,UnicodeError,TimeoutError): self.respond(400,{'error':'invalid_request'})
