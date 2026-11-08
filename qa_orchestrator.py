@@ -13,7 +13,8 @@ import sqlite3
 import urllib.error
 import urllib.request
 from pathlib import Path
-from qa_engine import run_qa_check, extract_numbers, extract_tags, extract_placeholders, extract_urls, extract_emails
+from qa_engine import run_qa_check
+from qa_localization import localized_explanation
 
 CHECKS=('missing','identical','numbers','structure','references','style')
 ACTIONS=('run_qa','explain','ask','report','refuse')
@@ -110,42 +111,8 @@ def plan(message,summary,transport):
     except (ValueError,TypeError,KeyError,IndexError,AttributeError):raise AgentError('invalid_plan') from None
 
 
-EXPLANATIONS={
- 'Missing translation':('번역문이 비어 있습니다.','The translation is empty.'),
- 'Source and target are identical':('원문과 번역문이 같습니다. 고유명사 등 의도된 유지인지 확인하세요.','Source and translation are identical. Check whether this is intentional, for example a proper name.'),
- 'Number mismatch':('원문과 번역문의 숫자 또는 등장 횟수가 다릅니다.','The numbers or their occurrence counts differ.'),
- 'Unit mismatch':('숫자와 단위 표기가 다릅니다. 언어별 표기 차이인지 확인하세요.','Number/unit expressions differ. Check whether this is a language-specific convention.'),
- 'Tag mismatch':('태그 또는 등장 횟수가 다릅니다.','Tags or their occurrence counts differ.'),
- 'Placeholder mismatch':('자리표시자 또는 등장 횟수가 다릅니다.','Placeholders or their occurrence counts differ.'),
- 'Bracket mismatch':('괄호 종류 또는 개수가 다릅니다.','Bracket types or counts differ.'),
- 'Unbalanced target brackets':('번역문에 여는 괄호와 닫는 괄호가 대응하지 않습니다.','Brackets are not balanced in the translation.'),
- 'URL mismatch':('URL 또는 등장 횟수가 다릅니다.','URLs or their occurrence counts differ.'),
- 'Email mismatch':('이메일 주소 또는 등장 횟수가 다릅니다.','Email addresses or occurrence counts differ.'),
- 'File name mismatch':('파일명 표기가 다릅니다.','Filename expressions differ.'),
- 'Shortcut mismatch':('키보드 단축키 표기가 다릅니다.','Keyboard shortcuts differ.'),
- 'Punctuation mismatch':('문장 끝 구두점이 다릅니다. 문체에 따른 차이일 수 있습니다.','End punctuation differs; this may be intentional style.'),
- 'Whitespace warning':('번역문에 앞뒤·연속 공백 또는 탭이 있습니다.','The translation contains leading/trailing/repeated spaces or tabs.'),
-}
-EVIDENCE={'Number mismatch':extract_numbers,'Tag mismatch':extract_tags,'Placeholder mismatch':extract_placeholders,
-          'URL mismatch':extract_urls,'Email mismatch':extract_emails}
-
-
 def explanation(row,english=False):
-    lines=[f"{row['id']}"+('번 구간을 확인했습니다.' if not english else ': findings checked.')]
-    if not row['issues']:lines.append('현재 검사에서 경고가 없습니다.' if not english else 'No warnings in the current checks.')
-    for issue in row['issues']:
-        kind=issue.split(':',1)[0]
-        lines.append(EXPLANATIONS.get(kind,('표기 차이를 확인하세요.','Check the differing expressions.'))[int(english)])
-        if kind=='Terminology mismatch':
-            lines.append(('Expected terminology: ' if english else '승인 용어: ')+issue.split(': ',1)[-1])
-        if kind in EVIDENCE:
-            extract=EVIDENCE[kind]
-            # Local evidence only, never provider-generated text or rewritten translations.
-            a=json.dumps(extract(row['source'])[:20],ensure_ascii=False)[:400]
-            b=json.dumps(extract(row['target'])[:20],ensure_ascii=False)[:400]
-            lines.append(('Source: ' if english else '원문 검출: ')+a+('\nTranslation: ' if english else '\n번역문 검출: ')+b)
-    lines.append('수정 여부는 원문과 문맥을 보고 판단해 주세요.' if not english else 'Decide whether to change it after reviewing the source and context.')
-    return '\n'.join(lines)
+    return localized_explanation(row,'en' if english else 'ko')
 
 
 def coordinate(payload,rows,qa_tool,transport=None,budget=None):
