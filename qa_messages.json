@@ -1,0 +1,442 @@
+{
+  "ko": {
+    "title": "LTLI 번역 QA 보고서",
+    "results": "검사 결과",
+    "findings": "경고 상세",
+    "summary": "검사 요약",
+    "segment": "구간",
+    "source": "원문",
+    "target": "번역문",
+    "status": "상태",
+    "severity": "심각도",
+    "warning": "경고",
+    "review": "검토 필요",
+    "accepted": "사용자 수락",
+    "clear": "경고 없음",
+    "code": "규칙 코드",
+    "issue": "오류 유형",
+    "description": "설명",
+    "advice": "검토 권고",
+    "detail": "검출 정보",
+    "unknown": "규칙 경고",
+    "fallback": "원문과 번역문의 차이를 확인하세요.",
+    "recommend": "원문과 문맥을 확인한 뒤 수정 여부를 판단하세요.",
+    "opened": "{id}번 구간을 확인했습니다.",
+    "empty": "현재 검사에서 경고가 없습니다.",
+    "terms": "승인 용어",
+    "generated": "생성 일시 (UTC)",
+    "language": "보고서 언어",
+    "checks": "검사 항목",
+    "total": "전체 구간",
+    "flagged": "검토 필요 구간",
+    "warnings": "검출 경고 수",
+    "accepted_count": "수락한 경고 수",
+    "scope": "검사 범위",
+    "scope_note": "형식·구조 검사 결과입니다. 언어적 품질은 별도 검수가 필요합니다.",
+    "accepted_at": "수락 일시 (UTC)",
+    "missing": "번역 누락",
+    "terminology": "용어",
+    "identical": "원문과 동일",
+    "numbers": "숫자·단위",
+    "structure": "형식 구조",
+    "references": "참조",
+    "style": "표기",
+    "sample_download": "샘플 파일 다운로드",
+    "sample_error": "샘플을 가져오지 못했습니다. 다시 시도해 주세요.",
+    "embedded_glossary": "샘플 파일의 용어집을 함께 검사합니다.",
+    "issues": {
+      "Missing translation": [
+        "번역 누락",
+        "번역문이 비어 있습니다."
+      ],
+      "Source and target are identical": [
+        "원문과 동일",
+        "원문과 번역문이 같습니다. 고유명사 등 의도된 유지인지 확인하세요."
+      ],
+      "Number mismatch": [
+        "숫자 불일치",
+        "원문과 번역문의 숫자 또는 등장 횟수가 다릅니다."
+      ],
+      "Unit mismatch": [
+        "단위 불일치",
+        "숫자와 단위 표기가 다릅니다. 언어별 표기 차이인지 확인하세요."
+      ],
+      "Tag mismatch": [
+        "태그 불일치",
+        "태그 또는 등장 횟수가 다릅니다."
+      ],
+      "Placeholder mismatch": [
+        "자리표시자 불일치",
+        "자리표시자 또는 등장 횟수가 다릅니다."
+      ],
+      "Bracket mismatch": [
+        "괄호 불일치",
+        "괄호 종류 또는 개수가 다릅니다."
+      ],
+      "Unbalanced target brackets": [
+        "번역문 괄호 짝 불일치",
+        "번역문에 여는 괄호와 닫는 괄호가 대응하지 않습니다."
+      ],
+      "URL mismatch": [
+        "URL 불일치",
+        "URL 또는 등장 횟수가 다릅니다."
+      ],
+      "Email mismatch": [
+        "이메일 불일치",
+        "이메일 주소 또는 등장 횟수가 다릅니다."
+      ],
+      "File name mismatch": [
+        "파일명 불일치",
+        "파일명 표기가 다릅니다."
+      ],
+      "Shortcut mismatch": [
+        "단축키 불일치",
+        "키보드 단축키 표기가 다릅니다."
+      ],
+      "Punctuation mismatch": [
+        "구두점 불일치",
+        "문장 끝 구두점이 다릅니다. 문체에 따른 차이일 수 있습니다."
+      ],
+      "Whitespace warning": [
+        "공백 경고",
+        "번역문에 앞뒤·연속 공백 또는 탭이 있습니다."
+      ],
+      "Terminology mismatch": [
+        "용어 불일치",
+        "용어집의 승인 번역어를 확인하세요."
+      ]
+    },
+    "report_limit": "경고가 너무 많습니다. 검사 범위를 좁히거나 파일을 나눠 주세요.",
+    "decisions": "사용자 수락 기록"
+  },
+  "en": {
+    "title": "LTLI Translation QA Report",
+    "results": "Results",
+    "findings": "Warning details",
+    "summary": "Summary",
+    "segment": "Segment",
+    "source": "Source",
+    "target": "Translation",
+    "status": "Status",
+    "severity": "Severity",
+    "warning": "Warning",
+    "review": "Review needed",
+    "accepted": "User accepted",
+    "clear": "No warning",
+    "code": "Rule code",
+    "issue": "Warning type",
+    "description": "Description",
+    "advice": "Review advice",
+    "detail": "Evidence",
+    "unknown": "Rule warning",
+    "fallback": "Check the difference between source and translation.",
+    "recommend": "Decide whether to change it after reviewing the source and context.",
+    "opened": "{id}: findings checked.",
+    "empty": "No warnings in the current checks.",
+    "terms": "Expected terminology",
+    "generated": "Generated at (UTC)",
+    "language": "Report language",
+    "checks": "Checks",
+    "total": "Total segments",
+    "flagged": "Segments to review",
+    "warnings": "Detected warnings",
+    "accepted_count": "Accepted warnings",
+    "scope": "Scope",
+    "scope_note": "Formatting and structure checks. Linguistic quality requires separate review.",
+    "accepted_at": "Accepted at (UTC)",
+    "missing": "Missing translation",
+    "terminology": "Terminology",
+    "identical": "Identical text",
+    "numbers": "Numbers and units",
+    "structure": "Structure",
+    "references": "References",
+    "style": "Style",
+    "sample_download": "Download sample file",
+    "sample_error": "Could not load the sample. Please try again.",
+    "embedded_glossary": "The check also uses the glossary in this sample.",
+    "issues": {
+      "Missing translation": [
+        "Missing translation",
+        "The translation is empty."
+      ],
+      "Source and target are identical": [
+        "Source and target are identical",
+        "Source and translation are identical. Check whether this is intentional, for example a proper name."
+      ],
+      "Number mismatch": [
+        "Number mismatch",
+        "The numbers or their occurrence counts differ."
+      ],
+      "Unit mismatch": [
+        "Unit mismatch",
+        "Number/unit expressions differ. Check whether this is a language-specific convention."
+      ],
+      "Tag mismatch": [
+        "Tag mismatch",
+        "Tags or their occurrence counts differ."
+      ],
+      "Placeholder mismatch": [
+        "Placeholder mismatch",
+        "Placeholders or their occurrence counts differ."
+      ],
+      "Bracket mismatch": [
+        "Bracket mismatch",
+        "Bracket types or counts differ."
+      ],
+      "Unbalanced target brackets": [
+        "Unbalanced target brackets",
+        "Brackets are not balanced in the translation."
+      ],
+      "URL mismatch": [
+        "URL mismatch",
+        "URLs or their occurrence counts differ."
+      ],
+      "Email mismatch": [
+        "Email mismatch",
+        "Email addresses or occurrence counts differ."
+      ],
+      "File name mismatch": [
+        "File name mismatch",
+        "Filename expressions differ."
+      ],
+      "Shortcut mismatch": [
+        "Shortcut mismatch",
+        "Keyboard shortcuts differ."
+      ],
+      "Punctuation mismatch": [
+        "Punctuation mismatch",
+        "End punctuation differs; this may be intentional style."
+      ],
+      "Whitespace warning": [
+        "Whitespace warning",
+        "The translation contains leading/trailing/repeated spaces or tabs."
+      ],
+      "Terminology mismatch": [
+        "Terminology mismatch",
+        "Check the approved translation in the glossary."
+      ]
+    },
+    "report_limit": "Too many warnings. Narrow the check scope or split the file.",
+    "decisions": "User decisions"
+  },
+  "zh-CN": {
+    "title": "LTLI 翻译质检报告",
+    "results": "检查结果",
+    "findings": "警告详情",
+    "summary": "检查摘要",
+    "segment": "片段",
+    "source": "原文",
+    "target": "译文",
+    "status": "状态",
+    "severity": "严重程度",
+    "warning": "警告",
+    "review": "待审阅",
+    "accepted": "用户已确认",
+    "clear": "无警告",
+    "code": "规则代码",
+    "issue": "警告类型",
+    "description": "说明",
+    "advice": "审阅建议",
+    "detail": "检测信息",
+    "unknown": "规则警告",
+    "fallback": "请核对原文与译文的差异。",
+    "recommend": "请核对原文与上下文后决定是否修改。",
+    "opened": "已检查第{id}段。",
+    "empty": "当前检查未发现警告。",
+    "terms": "核准术语",
+    "generated": "生成时间（UTC）",
+    "language": "报告语言",
+    "checks": "检查项目",
+    "total": "片段总数",
+    "flagged": "待审阅片段",
+    "warnings": "检出警告数",
+    "accepted_count": "已确认警告数",
+    "scope": "检查范围",
+    "scope_note": "本报告检查格式与结构。语言质量需另行审阅。",
+    "accepted_at": "确认时间（UTC）",
+    "missing": "译文缺失",
+    "terminology": "术语",
+    "identical": "原译文相同",
+    "numbers": "数字与单位",
+    "structure": "结构",
+    "references": "引用",
+    "style": "书写格式",
+    "sample_download": "下载示例文件",
+    "sample_error": "无法获取示例，请重试。",
+    "embedded_glossary": "检查时也会使用示例中的术语表。",
+    "issues": {
+      "Missing translation": [
+        "缺失译文",
+        "译文为空，请补全译文。"
+      ],
+      "Source and target are identical": [
+        "与原文相同",
+        "原文与译文相同，请确认是否有意保留。"
+      ],
+      "Number mismatch": [
+        "数字不一致",
+        "数字或出现次数不同，请核对数值。"
+      ],
+      "Unit mismatch": [
+        "单位不一致",
+        "数字与单位的表示不同，请核对单位或换算。"
+      ],
+      "Tag mismatch": [
+        "标签不一致",
+        "标签或出现次数不同，请核对标签。"
+      ],
+      "Placeholder mismatch": [
+        "占位符不一致",
+        "占位符或出现次数不同，请核对变量。"
+      ],
+      "Bracket mismatch": [
+        "括号不一致",
+        "括号的种类或数量不同。"
+      ],
+      "Unbalanced target brackets": [
+        "译文括号未配对",
+        "请核对译文的左右括号是否配对。"
+      ],
+      "URL mismatch": [
+        "URL不一致",
+        "网址或出现次数不同，请核对链接。"
+      ],
+      "Email mismatch": [
+        "电子邮件地址不一致",
+        "电子邮件地址或出现次数不同。"
+      ],
+      "File name mismatch": [
+        "文件名不一致",
+        "请核对文件名与扩展名。"
+      ],
+      "Shortcut mismatch": [
+        "快捷键不一致",
+        "键盘快捷键不同，请核对按键。"
+      ],
+      "Punctuation mismatch": [
+        "标点不一致",
+        "句末标点不同，请确认是否符合文体。"
+      ],
+      "Whitespace warning": [
+        "空白警告",
+        "译文含首尾空格、连续空格或制表符。"
+      ],
+      "Terminology mismatch": [
+        "术语不一致",
+        "译文未使用术语表中的核准译法。"
+      ]
+    },
+    "report_limit": "警告过多，请缩小检查范围或拆分文件。",
+    "decisions": "用户确认记录"
+  },
+  "zh-TW": {
+    "title": "LTLI 翻譯品管報告",
+    "results": "檢查結果",
+    "findings": "警告明細",
+    "summary": "檢查摘要",
+    "segment": "片段",
+    "source": "原文",
+    "target": "譯文",
+    "status": "狀態",
+    "severity": "嚴重程度",
+    "warning": "警告",
+    "review": "待審閱",
+    "accepted": "使用者已確認",
+    "clear": "無警告",
+    "code": "規則代碼",
+    "issue": "警告類型",
+    "description": "說明",
+    "advice": "審閱建議",
+    "detail": "檢測資訊",
+    "unknown": "規則警告",
+    "fallback": "請核對原文與譯文的差異。",
+    "recommend": "請核對原文與上下文後決定是否修改。",
+    "opened": "已檢查第{id}段。",
+    "empty": "目前檢查未發現警告。",
+    "terms": "核准術語",
+    "generated": "產生時間（UTC）",
+    "language": "報告語言",
+    "checks": "檢查項目",
+    "total": "片段總數",
+    "flagged": "待審閱片段",
+    "warnings": "檢出警告數",
+    "accepted_count": "已確認警告數",
+    "scope": "檢查範圍",
+    "scope_note": "本報告檢查格式與結構。語言品質需另行審閱。",
+    "accepted_at": "確認時間（UTC）",
+    "missing": "譯文缺漏",
+    "terminology": "術語",
+    "identical": "原譯文相同",
+    "numbers": "數字與單位",
+    "structure": "結構",
+    "references": "參照",
+    "style": "書寫格式",
+    "sample_download": "下載範例檔案",
+    "sample_error": "無法取得範例，請重試。",
+    "embedded_glossary": "檢查時也會使用範例中的術語表。",
+    "issues": {
+      "Missing translation": [
+        "譯文缺漏",
+        "譯文為空，請補齊譯文。"
+      ],
+      "Source and target are identical": [
+        "與原文相同",
+        "原文與譯文相同，請確認是否刻意保留。"
+      ],
+      "Number mismatch": [
+        "數字不一致",
+        "數字或出現次數不同，請核對數值。"
+      ],
+      "Unit mismatch": [
+        "單位不一致",
+        "數字與單位的表示不同，請核對單位或換算。"
+      ],
+      "Tag mismatch": [
+        "標籤不一致",
+        "標籤或出現次數不同，請核對標籤。"
+      ],
+      "Placeholder mismatch": [
+        "預留位置不一致",
+        "預留位置或出現次數不同，請核對變數。"
+      ],
+      "Bracket mismatch": [
+        "括號不一致",
+        "括號的種類或數量不同。"
+      ],
+      "Unbalanced target brackets": [
+        "譯文括號未配對",
+        "請核對譯文的左右括號是否配對。"
+      ],
+      "URL mismatch": [
+        "URL 不一致",
+        "網址或出現次數不同，請核對連結。"
+      ],
+      "Email mismatch": [
+        "電子郵件地址不一致",
+        "電子郵件地址或出現次數不同。"
+      ],
+      "File name mismatch": [
+        "檔案名稱不一致",
+        "請核對檔案名稱與副檔名。"
+      ],
+      "Shortcut mismatch": [
+        "快速鍵不一致",
+        "鍵盤快速鍵不同，請核對按鍵。"
+      ],
+      "Punctuation mismatch": [
+        "標點不一致",
+        "句尾標點不同，請確認是否符合文體。"
+      ],
+      "Whitespace warning": [
+        "空白警告",
+        "譯文含首尾空格、連續空格或定位字元。"
+      ],
+      "Terminology mismatch": [
+        "術語不一致",
+        "譯文未採用術語表中的核准譯法。"
+      ]
+    },
+    "report_limit": "警告過多，請縮小檢查範圍或分割檔案。",
+    "decisions": "使用者確認紀錄"
+  }
+}

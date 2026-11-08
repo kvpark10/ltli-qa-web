@@ -9,13 +9,18 @@ import time
 from google_sheets_storage import record_qa
 from qa_notifications import notify_qa
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 from xml.etree import ElementTree as ET
 from openpyxl import load_workbook
 from qa_engine import run_qa_check, convert_dataframe_to_excel
-from qa_orchestrator import explanation
+from qa_localization import MESSAGES, localized_explanation
+from qa_workbooks import GLOSSARY_SHEET, GLOSSARY_HEADER, localized_report, sample_workbook
 import pandas as pd
 from qa_findings import annotate, review, ReviewError
+
+SAMPLES = json.loads(Path(__file__).with_name("qa_samples.json").read_text(encoding="utf-8"))
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 MAX_FILE = 10 * 1024 * 1024
 MAX_BODY = 29 * 1024 * 1024
@@ -85,7 +90,7 @@ def text_lines(kind, data):
     raise InputError('encoding')
 
 
-def read_rows(payload):
+def read_rows(payload, embedded_glossary=None):
     if 'rows' in payload:
         if payload.get('files'): raise InputError('ambiguous_input')
         rows = payload['rows']
@@ -112,6 +117,8 @@ def read_rows(payload):
                     if source is None and target is None: continue
                     rows.append({'source': str(source) if source is not None else '', 'target': str(target) if target is not None else ''})
                     if len(rows)>MAX_ROWS: raise InputError('row_limit')
+                if embedded_glossary is not None and GLOSSARY_SHEET in book:
+                    embedded_glossary.extend(workbook_glossary(book[GLOSSARY_SHEET]))
             except InputError: raise
             except (ValueError, KeyError, ET.ParseError): raise InputError('invalid_file') from None
             finally:
@@ -146,15 +153,30 @@ def read_glossary(payload):
     return entries
 
 
+def workbook_glossary(sheet):
+    rows = sheet.iter_rows(max_col=2,values_only=True)
+    if next(rows,()) != GLOSSARY_HEADER:
+        raise InputError('glossary')
+    terms = {}
+    for index,(source,target) in enumerate(rows):
+        if index >= 250 or not isinstance(source,str) or not isinstance(target,str):
+            raise InputError('glossary')
+        terms.setdefault(source,[]).append(target)
+    return read_glossary({'glossary':[{'source_term':source,'approved_targets':targets}
+                                      for source,targets in terms.items()]})
+
+
 def execute(payload):
     if not isinstance(payload,dict) or payload.get('action')!='qa': raise InputError('qa_only')
     if set(payload)-{'action','rows','files','checks','decisions','explain_id','language','glossary'}: raise InputError('invalid_request')
-    checks=payload.get('checks',[rule for rule in RULES if rule!='terminology' or payload.get('glossary')])
+    embedded=[]
+    rows=read_rows(payload,embedded if 'glossary' not in payload else None)
+    glossary=read_glossary(payload) if 'glossary' in payload else embedded
+    checks=payload.get('checks',[rule for rule in RULES if rule!='terminology' or glossary])
     if not isinstance(checks,list) or not checks or any(not isinstance(c,str) or c not in RULES for c in checks): raise InputError('checks')
-    glossary=read_glossary(payload)
     if 'terminology' in checks and not glossary:
         raise InputError('glossary_required')
-    rows=read_rows(payload); results=[]
+    results=[]
     prefixes=tuple(x for c in checks for x in RULES[c])
     for index,row in enumerate(rows,1):
         all_issues=run_qa_check(row['source'],row['target'],glossary)
@@ -163,9 +185,9 @@ def execute(payload):
     result=annotate({'version':'ltli-public-qa-1','rows':results,'total':len(results),'checks':checks},payload.get('decisions'))
     if 'explain_id' in payload:
         index=payload['explain_id'];language=payload.get('language','ko')
-        if type(index) is not int or not 1<=index<=len(results) or language not in ('ko','en'):raise InputError('explain_request')
+        if type(index) is not int or not 1<=index<=len(results) or not isinstance(language,str) or language not in MESSAGES:raise InputError('explain_request')
         row=results[index-1]
-        result['explanation']=explanation({**row,'issues':row['active_issues']},language=='en')
+        result['explanation']=localized_explanation({**row,'issues':row['active_issues']},language)
         result['explained_id']=index
     return result
 
@@ -180,6 +202,16 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Content-Length',str(len(body)))
         self.end_headers();self.wfile.write(body)
+    def workbook_response(self, body, filename):
+        self.send_response(200)
+        self.send_header('Content-Type',XLSX_MIME)
+        self.send_header('Content-Disposition',f'attachment; filename="{filename}"')
+        self.send_header('Cache-Control','no-store')
+        self.send_header('X-Content-Type-Options','nosniff')
+        self.send_header('Content-Length',str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         self.respond(200,{'status':'ok'}) if self.path=='/api/qa/health' else self.respond(404,{'error':'not_found'})
     def do_POST(self):
@@ -199,10 +231,23 @@ class Handler(BaseHTTPRequestHandler):
             payload=json.loads(self.rfile.read(length))
             log_check=(self.path=='/api/qa/check' and isinstance(payload,dict) and 'explain_id' not in payload)
             if self.path=='/api/qa/prepare':
+                if isinstance(payload,dict) and payload.get('action')=='sample':
+                    language=payload.get('language')
+                    fmt=payload.get('format','rows')
+                    if (set(payload)-{'action','language','format'} or not isinstance(language,str)
+                        or language not in SAMPLES or fmt not in ('rows','xlsx')):
+                        raise InputError('sample_request')
+                    sample=SAMPLES[language]
+                    if fmt=='xlsx':
+                        return self.workbook_response(sample_workbook(sample),f'ltli_qa_sample_{language}.xlsx')
+                    return self.respond(200,{'version':'ltli-qa-sample-1',**sample})
                 if not isinstance(payload,dict) or payload.get('action')!='prepare' or set(payload)-{'action','rows','files'}:
                     raise InputError('invalid_request')
-                rows=read_rows(payload)
+                embedded=[]
+                rows=read_rows(payload,embedded)
                 result={'version':'ltli-qa-input-1','total':len(rows),'rows':rows}
+                if embedded:
+                    result['glossary']=embedded
             elif self.path=='/api/qa/review':
                 if not isinstance(payload,dict) or payload.get('action')!='review' or set(payload)-{'action','rows','checks','decisions','operation','row_id','issue','fingerprint','glossary'}:
                     raise InputError('invalid_request')
@@ -211,6 +256,14 @@ class Handler(BaseHTTPRequestHandler):
                 glossary=read_glossary(payload)
                 for row in result['rows']:row['all_issues']=run_qa_check(row['source'],row['target'],glossary)
                 result=review(result,payload)
+            elif self.path=='/api/qa/report' and isinstance(payload,dict) and 'report_language' in payload:
+                language=payload['report_language']
+                if not isinstance(language,str) or language not in MESSAGES:
+                    raise InputError('report_language')
+                result=execute({key:value for key,value in payload.items() if key!='report_language'})
+                if sum(len(row['issues']) for row in result['rows'])>25000:
+                    raise InputError('report_limit')
+                return self.workbook_response(localized_report(result,language),'LTLI-QA-report.xlsx')
             else: result=execute(payload)
             outcome='success'
             if log_check:
@@ -222,12 +275,7 @@ class Handler(BaseHTTPRequestHandler):
                                      'QA Result':'Review' if r['active_issues'] else 'User accepted warnings' if r['accepted_issues'] else 'No warning'}
                                     for r in result['rows']])
                 body=convert_dataframe_to_excel(frame,decisions=result['decisions'])
-                self.send_response(200)
-                self.send_header('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                self.send_header('Content-Disposition','attachment; filename="LTLI-QA-report.xlsx"')
-                self.send_header('Cache-Control','no-store')
-                self.send_header('Content-Length',str(len(body)))
-                self.end_headers();self.wfile.write(body)
+                self.workbook_response(body,'LTLI-QA-report.xlsx')
             else: self.respond(200,result)
         except ReviewError as error: self.respond(409 if str(error)=='stale_review' else 400,{'error':str(error)})
         except InputError as error: self.respond(403 if str(error)=='qa_only' else 400,{'error':str(error)})

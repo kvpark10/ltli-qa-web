@@ -1,0 +1,38 @@
+{
+  "ko": {
+    "rows": [
+      {"source":"Save 2 files to the shared folder.","target":"공유 폴더에 파일 3개를 저장하세요."},
+      {"source":"The backup is stored in the cloud.","target":"백업은 온라인 저장소에 보관됩니다."},
+      {"source":"Restart the device after the update.","target":""},
+      {"source":"Welcome, {name}!","target":"환영합니다!"}
+    ],
+    "glossary":[{"source_term":"cloud","approved_targets":["클라우드"]}]
+  },
+  "en": {
+    "rows": [
+      {"source":"添付ファイルを2件保存してください。","target":"Save 3 attachments."},
+      {"source":"顧客番号を入力してください。","target":"Enter your client number."},
+      {"source":"変更内容を確認してください。","target":""},
+      {"source":"{name}さん、ようこそ！","target":"Welcome!"}
+    ],
+    "glossary":[{"source_term":"顧客番号","approved_targets":["customer ID"]}]
+  },
+  "zh-CN": {
+    "rows": [
+      {"source":"Upload 2 files to the team drive.","target":"请将3个文件上传到团队网盘。"},
+      {"source":"Sign in with your mobile number.","target":"请使用联系电话登录。"},
+      {"source":"Contact support if the upload fails.","target":""},
+      {"source":"Welcome, {name}!","target":"欢迎使用！"}
+    ],
+    "glossary":[{"source_term":"mobile number","approved_targets":["手机号"]}]
+  },
+  "zh-TW": {
+    "rows": [
+      {"source":"Upload 2 files to the team drive.","target":"請將 3 個檔案上傳至團隊雲端硬碟。"},
+      {"source":"Sign in with your mobile number.","target":"請使用聯絡電話登入。"},
+      {"source":"Contact support if the upload fails.","target":""},
+      {"source":"Welcome, {name}!","target":"歡迎使用！"}
+    ],
+    "glossary":[{"source_term":"mobile number","approved_targets":["手機號碼"]}]
+  }
+}
