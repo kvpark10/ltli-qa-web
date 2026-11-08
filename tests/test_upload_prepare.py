@@ -31,10 +31,9 @@ class PreparationTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError) as error:self.send('/api/qa/prepare',payload)
             self.assertEqual(error.exception.code,400)
     def test_report_explicitly_excludes_linguistic_validation(self):
-        with self.send('/api/qa/report',{'action':'qa','rows':[{'source':'Hello.','target':'안녕하세요.'}]}) as output:
+        with self.send('/api/qa/report',{'action':'qa','report_language':'zh-TW','rows':[{'source':'Hello.','target':'안녕하세요.'}]}) as output:
             book=load_workbook(io.BytesIO(output.read()))
-        self.assertEqual(book.sheetnames[0],'QA Results')
-        self.assertIn('QA Scope',book.sheetnames)
-        text=' '.join(str(row[0]) for row in book['QA Scope'].values)
-        self.assertIn('의미 정확성·문법·자연스러움은 검사하지 않습니다',text)
-        self.assertIn('Meaning accuracy, grammar and fluency are not evaluated',text)
+        self.assertEqual(book.properties.language, 'zh-TW')
+        summary = dict(book.worksheets[0].values)
+        self.assertEqual(summary['檢查範圍'], '本報告檢查格式與結構。語言品質需另行審閱。')
+        book.close()

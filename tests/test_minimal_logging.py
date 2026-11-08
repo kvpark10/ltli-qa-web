@@ -41,7 +41,7 @@ class MinimalLogTests(unittest.TestCase):
         try:
             with patch('public_api.record_qa',side_effect=on_record) as record:
                 post('check',payload)
-                post('report',payload)
+                post('report',{**payload,'report_language':'en'})
                 post('check',dict(payload,explain_id=1))
                 post('prepare',{'action':'prepare','rows':payload['rows']})
                 self.assertEqual(record.call_count,1)

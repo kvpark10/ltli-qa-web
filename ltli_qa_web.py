@@ -611,7 +611,7 @@ with st.expander(
         data=sample_workbook(SAMPLES[WORKBOOK_LOCALE]),
         file_name=f"ltli_qa_sample_{WORKBOOK_LOCALE}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="qa_localized_sample_download",
+        key=f"qa_localized_sample_download_{WORKBOOK_LOCALE}",
         on_click="ignore",
     )
     st.markdown(f"**{L('template_label', 'Blank templates · add your own content')}**")
@@ -871,6 +871,7 @@ if "qa_result_dataframe" in st.session_state:
         label=L("download", "Download Excel report  ↓"),
         data=localized_report(report_from_frames(result_dataframe, error_count, bool(glossary)), WORKBOOK_LOCALE),
         file_name=report_filename(WORKBOOK_LOCALE),
+        key=f"qa_localized_report_{WORKBOOK_LOCALE}",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         on_click=record_report_download,
         use_container_width=True,

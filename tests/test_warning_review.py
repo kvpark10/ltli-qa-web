@@ -88,10 +88,13 @@ class WarningReviewTests(unittest.TestCase):
             result=post('check',{'action':'qa','rows':ROWS,'checks':['numbers']})
             action={'action':'review','rows':ROWS,'checks':['numbers'],'decisions':[],'operation':'accept','row_id':1,'issue':'Number mismatch','fingerprint':result['rows'][0]['fingerprint']}
             result=post('review',action);self.assertEqual(result['flagged'],0)
-            book=load_workbook(io.BytesIO(post('report',{'action':'qa','rows':ROWS,'checks':['numbers'],'decisions':result['decisions']},True)))
-            self.assertIn('User Decisions',book.sheetnames);self.assertEqual(book['User Decisions']['C2'].value,'Accepted by user')
-            self.assertIn('User accepted warnings',[c.value for c in book.active[2]])
-            self.assertIn('Number mismatch',[c.value for c in book.active[2]])
+            book=load_workbook(io.BytesIO(post('report',{'action':'qa','rows':ROWS,'checks':['numbers'],'decisions':result['decisions'],'report_language':'en'},True)))
+            from qa_localization import MESSAGES
+            copy = MESSAGES['en']
+            self.assertEqual(book[copy['decisions']]['C2'].value, copy['issues']['Number mismatch'][0])
+            self.assertEqual(book[copy['results']]['D2'].value, copy['accepted'])
+            self.assertEqual(book[copy['findings']]['B2'].value, 'Number mismatch')
+            book.close()
             action.update(operation='restore',decisions=result['decisions']);self.assertEqual(post('review',action)['flagged'],1)
             action['fingerprint']='outdated'
             with self.assertRaises(urllib.error.HTTPError) as e:post('review',action)

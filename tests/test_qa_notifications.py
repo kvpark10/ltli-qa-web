@@ -46,7 +46,7 @@ class NotificationTests(unittest.TestCase):
         try:
             with patch('public_api.notify_qa',side_effect=lambda *a,**k:called.set()) as notify:
                 post('check',payload);self.assertTrue(called.wait(2))
-                post('report',payload)
+                post('report',{**payload,'report_language':'en'})
                 post('check',dict(payload,explain_id=1))
                 post('check',{'action':'qa','rows':[]})
                 post('review',{'action':'review','rows':payload['rows']})
