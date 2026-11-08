@@ -90,7 +90,7 @@ class CoordinatorTests(unittest.TestCase):
         coordinate(request(),ROWS,execute,Mock(return_value=response('explain',segment_id=1)),self.budget)
         self.assertEqual(json.dumps(ROWS),before)
 
-    def test_http_assist_requires_consent_and_runs_the_same_rule_tool(self):
+    def test_public_http_assist_cannot_call_provider_even_with_consent(self):
         import threading
         import urllib.request
         import urllib.error
@@ -104,11 +104,10 @@ class CoordinatorTests(unittest.TestCase):
                 url=f'http://127.0.0.1:{server.server_port}/api/qa/assist'
                 def send(payload):
                     return urllib.request.urlopen(urllib.request.Request(url,data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'}))
-                with self.assertRaises(urllib.error.HTTPError) as error:send(request(rows=ROWS,consent=False))
-                self.assertEqual(error.exception.code,403);provider.assert_not_called()
-                with send(request(rows=ROWS)) as output:
-                    result=json.load(output)
-                self.assertEqual(result['version'],'ltli-qa-agent-1')
-                self.assertEqual(result['qa']['rows'][0]['issues'],['Number mismatch'])
-                self.assertEqual(provider.call_count,1)
+                for consent in (False, True):
+                    with self.assertRaises(urllib.error.HTTPError) as error:
+                        send(request(rows=ROWS,consent=consent))
+                    self.assertEqual(error.exception.code,403)
+                    self.assertEqual(json.load(error.exception),{'error':'qa_only'})
+                provider.assert_not_called()
         finally:server.shutdown();server.server_close();thread.join()

@@ -7,6 +7,7 @@ import unittest
 import urllib.request
 import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 from zipfile import ZipFile
 from openpyxl import Workbook
 from public_api import execute, InputError, BoundedServer, Handler
@@ -69,6 +70,55 @@ class PublicApiTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError) as e:urllib.request.urlopen(request)
             self.assertEqual(e.exception.code,404)
         finally:server.shutdown();server.server_close();thread.join()
+    def test_terminology_workflow_never_invokes_provider(self):
+        from openpyxl import load_workbook
+        rows=[{'source':'雲端服務版本２','target':'云服务版本３'}]
+        glossary=[{'source_term':'雲端服務','approved_targets':['云端服务']}]
+        qa={'action':'qa','rows':rows,'checks':['terminology'],'glossary':glossary}
+        server=BoundedServer(('127.0.0.1',0),Handler)
+        thread=threading.Thread(target=server.serve_forever,daemon=True)
+        thread.start()
+        def post(path,payload):
+            url=f'http://127.0.0.1:{server.server_port}/api/qa/{path}'
+            return urllib.request.urlopen(urllib.request.Request(url,data=json.dumps(payload).encode(),
+                                          headers={'Content-Type':'application/json'}))
+        try:
+            with patch('qa_orchestrator.post',side_effect=AssertionError('Provider called')) as provider, \
+                 patch('public_api.record_qa'), patch('public_api.notify_qa'):
+                with post('prepare',{'action':'prepare','rows':rows}) as output:
+                    self.assertEqual(json.load(output)['rows'],rows)
+                with post('check',{**qa,'explain_id':1,'language':'en'}) as output:
+                    result=json.load(output)
+                self.assertIn('雲端服務 → 云端服务',result['explanation'])
+                row=result['rows'][0]
+                self.assertEqual(row['source'],rows[0]['source'])
+                self.assertEqual(row['target'],rows[0]['target'])
+                self.assertEqual(row['active_issues'],['Terminology mismatch: 雲端服務 → 云端服务'])
+                review={**qa,'action':'review','operation':'accept','row_id':1,
+                        'issue':row['issues'][0],'fingerprint':row['fingerprint']}
+                with post('review',review) as output:
+                    accepted=json.load(output)
+                self.assertEqual(accepted['accepted_count'],1)
+                with post('check',{**qa,'checks':['numbers'],'decisions':accepted['decisions']}) as output:
+                    self.assertEqual(json.load(output)['decisions'],accepted['decisions'])
+                with post('report',{**qa,'decisions':accepted['decisions']}) as output:
+                    workbook=load_workbook(io.BytesIO(output.read()))
+                    self.assertIn('雲端服務 → 云端服务',workbook.active['F2'].value)
+                    workbook.close()
+                with post('review',{**review,'operation':'restore','decisions':accepted['decisions']}) as output:
+                    self.assertEqual(json.load(output)['flagged'],1)
+                provider.assert_not_called()
+        finally:
+            server.shutdown();server.server_close();thread.join()
+
+    def test_terminology_requires_valid_glossary(self):
+        payload={'action':'qa','checks':['terminology'],'rows':[{'source':'Cloud','target':'云'}]}
+        with self.assertRaisesRegex(InputError,'glossary_required'):
+            execute(payload)
+        for bad in [None,{'Cloud':'雲'},[{'source_term':'Cloud','approved_targets':['']}]]:
+            with self.assertRaisesRegex(InputError,'glossary'):
+                execute({**payload,'glossary':bad})
+
     def test_admin_protection_preserves_other_servers_and_is_idempotent(self):
         spec=importlib.util.spec_from_file_location('protect',Path(__file__).resolve().parents[1]/'deploy/protect-qa-admin.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         original='server {\nlisten 443 ssl;\nserver_name qa.ltli.ai;\nlocation / { proxy_pass http://127.0.0.1:8501; }\n}\nserver {\nserver_name ltli.ai;\n}'

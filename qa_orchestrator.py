@@ -136,6 +136,8 @@ def explanation(row,english=False):
     for issue in row['issues']:
         kind=issue.split(':',1)[0]
         lines.append(EXPLANATIONS.get(kind,('표기 차이를 확인하세요.','Check the differing expressions.'))[int(english)])
+        if kind=='Terminology mismatch':
+            lines.append(('Expected terminology: ' if english else '승인 용어: ')+issue.split(': ',1)[-1])
         if kind in EVIDENCE:
             extract=EVIDENCE[kind]
             # Local evidence only, never provider-generated text or rewritten translations.

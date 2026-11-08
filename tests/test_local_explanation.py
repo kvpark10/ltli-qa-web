@@ -12,7 +12,7 @@ class LocalExplanationTests(unittest.TestCase):
         server=BoundedServer(('127.0.0.1',0),Handler)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         try:
-            with patch('public_api.coordinate',side_effect=AssertionError('No AI coordination')),patch('qa_orchestrator.post',side_effect=AssertionError('No provider call')),patch('qa_orchestrator.Budget.reserve',side_effect=AssertionError('No AI budget')):
+            with patch('qa_orchestrator.coordinate',side_effect=AssertionError('No AI coordination')),patch('qa_orchestrator.post',side_effect=AssertionError('No provider call')),patch('qa_orchestrator.Budget.reserve',side_effect=AssertionError('No AI budget')):
                 for language in ('ko','en'):
                     request=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/qa/check',data=json.dumps({'action':'qa','rows':ROWS,'explain_id':1,'language':language}).encode(),headers={'Content-Type':'application/json'})
                     with urllib.request.urlopen(request) as response:result=json.load(response)

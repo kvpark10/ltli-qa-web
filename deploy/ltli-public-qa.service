@@ -7,10 +7,6 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/ltli/ltli-qa-web
 ExecStart=/home/ubuntu/ltli/ltli-qa-web/.venv/bin/python public_api.py
-EnvironmentFile=-/etc/ltli-translate/gemini.env
-# Enable with a separate systemd override after reviewing request limits.
-Environment=LTLI_QA_AGENT_ENABLED=0
-Environment=LTLI_QA_AGENT_USAGE_DB=/var/lib/ltli-public-qa/agent-usage.sqlite
 StateDirectory=ltli-public-qa
 Environment=LTLI_QA_API_PORT=8510
 Environment=PYTHONDONTWRITEBYTECODE=1
