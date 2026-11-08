@@ -34,8 +34,12 @@ class MinimalLogTests(unittest.TestCase):
             try:
                 with urllib.request.urlopen(req) as response: response.read()
             except urllib.error.HTTPError as error: error.read()
+        failed_logged=threading.Event()
+        def on_record(outcome,*args,**kwargs):
+            if outcome=='failed':
+                failed_logged.set()
         try:
-            with patch('public_api.record_qa') as record:
+            with patch('public_api.record_qa',side_effect=on_record) as record:
                 post('check',payload)
                 post('report',payload)
                 post('check',dict(payload,explain_id=1))
@@ -44,6 +48,7 @@ class MinimalLogTests(unittest.TestCase):
                 self.assertEqual(record.call_args.args[0],'success')
                 self.assertEqual(record.call_args.kwargs,{'segments':1,'warnings':1})
                 post('check',{'action':'qa','rows':[]})
+                self.assertTrue(failed_logged.wait(2))
                 self.assertEqual(record.call_count,2)
                 self.assertEqual(record.call_args.args[0],'failed')
         finally:

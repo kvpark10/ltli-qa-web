@@ -18,7 +18,7 @@ class PreparationTests(unittest.TestCase):
             data=json.dumps(payload).encode(),headers={'Content-Type':'application/json'}))
     def test_prepare_returns_alignment_without_running_checks_or_ai(self):
         rows=[{'source':'Save 2 files.','target':'파일 3개.'},{'source':'Hello','target':''}]
-        with patch('public_api.run_qa_check') as qa,patch('public_api.coordinate') as ai:
+        with patch('public_api.run_qa_check') as qa,patch('qa_orchestrator.coordinate') as ai:
             with self.send('/api/qa/prepare',{'action':'prepare','rows':rows}) as output:prepared=json.load(output)
             self.assertEqual(prepared['rows'],rows);self.assertEqual(prepared['total'],2)
             qa.assert_not_called();ai.assert_not_called()
