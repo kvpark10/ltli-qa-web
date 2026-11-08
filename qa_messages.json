@@ -107,7 +107,16 @@
       ]
     },
     "report_limit": "경고가 너무 많습니다. 검사 범위를 좁히거나 파일을 나눠 주세요.",
-    "decisions": "사용자 수락 기록"
+    "decisions": "사용자 수락 기록",
+    "sample_run": "샘플로 검사하기",
+    "report_started": "보고서 다운로드를 시작했습니다.",
+    "count": "건수",
+    "whitespace_details": {
+      "Leading space": "앞쪽 공백",
+      "Trailing space": "뒤쪽 공백",
+      "Multiple spaces": "연속 공백",
+      "Tab character": "탭 문자"
+    }
   },
   "en": {
     "title": "LTLI Translation QA Report",
@@ -217,7 +226,16 @@
       ]
     },
     "report_limit": "Too many warnings. Narrow the check scope or split the file.",
-    "decisions": "User decisions"
+    "decisions": "User decisions",
+    "sample_run": "Check the sample",
+    "report_started": "The report download has started.",
+    "count": "Count",
+    "whitespace_details": {
+      "Leading space": "Leading space",
+      "Trailing space": "Trailing space",
+      "Multiple spaces": "Multiple spaces",
+      "Tab character": "Tab character"
+    }
   },
   "zh-CN": {
     "title": "LTLI 翻译质检报告",
@@ -327,7 +345,16 @@
       ]
     },
     "report_limit": "警告过多，请缩小检查范围或拆分文件。",
-    "decisions": "用户确认记录"
+    "decisions": "用户确认记录",
+    "sample_run": "检查示例",
+    "report_started": "报告已开始下载。",
+    "count": "数量",
+    "whitespace_details": {
+      "Leading space": "开头空格",
+      "Trailing space": "末尾空格",
+      "Multiple spaces": "连续空格",
+      "Tab character": "制表符"
+    }
   },
   "zh-TW": {
     "title": "LTLI 翻譯品管報告",
@@ -437,6 +464,15 @@
       ]
     },
     "report_limit": "警告過多，請縮小檢查範圍或分割檔案。",
-    "decisions": "使用者確認紀錄"
+    "decisions": "使用者確認紀錄",
+    "sample_run": "檢查範例",
+    "report_started": "報告已開始下載。",
+    "count": "件數",
+    "whitespace_details": {
+      "Leading space": "開頭空格",
+      "Trailing space": "結尾空格",
+      "Multiple spaces": "連續空格",
+      "Tab character": "定位字元"
+    }
   }
 }

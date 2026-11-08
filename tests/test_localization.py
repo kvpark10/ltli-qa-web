@@ -12,12 +12,14 @@ from pathlib import Path
 
 import pandas as pd
 from docx import Document
+from public_api import RULES
+from qa_localization import messages, issue_details
 
 
 def load_helpers():
     path = Path(__file__).resolve().parents[1] / "ltli_qa_web.py"
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    constants = {"LANGUAGE", "MAX_FILE_SIZE_BYTES", "ISSUE_LABELS_KO"}
+    constants = {"LANGUAGE", "MAX_FILE_SIZE_BYTES"}
     nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef) or (
         isinstance(node, ast.Assign) and any(
             isinstance(target, ast.Name) and target.id in constants
@@ -26,7 +28,7 @@ def load_helpers():
     )]
     import qa_engine
     namespace = dict(vars(qa_engine))
-    namespace.update(io=io, re=re, pd=pd, Document=Document, Counter=Counter, UI_LANGUAGE="ko")
+    namespace.update(io=io, re=re, pd=pd, Document=Document, Counter=Counter, UI_LANGUAGE="ko", messages=messages, issue_details=issue_details, RULES=RULES)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(path), "exec"), namespace)
     return namespace, tree
 
@@ -43,20 +45,21 @@ class LocalizationTests(unittest.TestCase):
 
     def test_korean_results_do_not_mutate_canonical_report(self):
         original = pd.DataFrame({"Source": ["a"], "Target": ["b"],
-                                 "QA Issues": ["Whitespace warning: Leading space, Tab character"],
+                                 "QA Issues": [["Whitespace warning: Leading space, Tab character"]],
                                  "QA Result": ["Error"]})
         before = original.copy(deep=True)
-        translated = self.helpers["localized_results"](original)
-        self.assertEqual(translated["검출 사항"][0], "공백 주의: 앞쪽 공백, 탭 문자")
-        self.assertEqual(translated["검사 결과"][0], "검토 필요")
+        translated = self.helpers["localized_results"](original, "ko")
+        self.assertEqual(translated["경고 상세"][0], "공백 경고: 앞쪽 공백, 탭 문자")
+        self.assertEqual(translated["상태"][0], "검토 필요")
         pd.testing.assert_frame_equal(original, before)
-        self.helpers["UI_LANGUAGE"] = "en"
-        pd.testing.assert_frame_equal(self.helpers["localized_results"](original), before)
+        traditional = self.helpers["localized_results"](original, "zh-TW")
+        self.assertIn("定位字元", traditional[messages("zh-TW")["findings"]][0])
+        self.assertEqual(traditional[messages("zh-TW")["source"]][0], "a")
 
     def test_summary_labels_preserve_counts(self):
         summary = pd.DataFrame({"Issue Type": ["Number mismatch"], "Count": [3]})
-        translated = self.helpers["localized_results"](summary)
-        self.assertEqual(translated.to_dict("records"), [{"문제 유형": "숫자 불일치", "건수": 3}])
+        translated = self.helpers["localized_results"](summary, "ko")
+        self.assertEqual(translated.to_dict("records"), [{"오류 유형": "숫자 불일치", "건수": 3}])
 
     def test_qa_identifiers_are_language_independent(self):
         for language in ("ko", "en"):

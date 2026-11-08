@@ -10,12 +10,12 @@
   },
   "en": {
     "rows": [
-      {"source":"添付ファイルを2件保存してください。","target":"Save 3 attachments."},
-      {"source":"顧客番号を入力してください。","target":"Enter your client number."},
-      {"source":"変更内容を確認してください。","target":""},
-      {"source":"{name}さん、ようこそ！","target":"Welcome!"}
+      {"source":"첨부 파일을 2개 저장하세요.","target":"Save 3 attachments."},
+      {"source":"고객 번호를 입력하세요.","target":"Enter your client number."},
+      {"source":"변경 내용을 확인하세요.","target":""},
+      {"source":"{name} 님, 환영합니다!","target":"Welcome!"}
     ],
-    "glossary":[{"source_term":"顧客番号","approved_targets":["customer ID"]}]
+    "glossary":[{"source_term":"고객 번호","approved_targets":["customer ID"]}]
   },
   "zh-CN": {
     "rows": [

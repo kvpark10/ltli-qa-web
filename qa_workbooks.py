@@ -1,12 +1,15 @@
 """XLSX files for the public QA service."""
 from datetime import datetime, timezone
 from io import BytesIO
+import json
+from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.cell import Cell
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font
 from qa_localization import issue_details, messages
 
+SAMPLES = json.loads(Path(__file__).with_name("qa_samples.json").read_text(encoding="utf-8"))
 GLOSSARY_SHEET = 'LTLI Glossary'
 GLOSSARY_HEADER = ('Source term', 'Approved translation')
 WRAP = Alignment(wrap_text=True,vertical='top')
@@ -56,6 +59,10 @@ def sample_workbook(sample):
     return workbook_bytes(book)
 
 
+def report_filename(language):
+    return f"LTLI-QA-report-{language}.xlsx"
+
+
 def localized_report(result, language):
     c = messages(language)
     book = Workbook()
@@ -76,20 +83,21 @@ def localized_report(result, language):
     ]
     for label,value in items:
         append_text(summary,(c[label],value),font)
-    data = formatted_sheet(book,c['results'],(12,60,60,20))
-    append_text(data, tuple(c[k] for k in ('segment','source','target','status')),header)
+    metadata_columns = result.get('metadata_columns', [])
+    data = formatted_sheet(book,c['results'],(12,60,60,20,*([24] * len(metadata_columns))))
+    append_text(data, (*(c[k] for k in ('segment','source','target','status')), *metadata_columns),header)
     warnings = formatted_sheet(book,c['findings'],(12,32,24,13,20,45,38,48,27))
     append_text(warnings, tuple(c[k] for k in ('segment','code','issue','severity','status','description','detail','advice','accepted_at')),header)
     decisions = {(d['id'],d['issue']):d['accepted_at'] for d in result['decisions']}
     for row in result['rows']:
         status = 'review' if row['active_issues'] else 'accepted' if row['accepted_issues'] else 'clear'
-        append_text(data,(row['id'],row['source'],row['target'],c[status]),font)
+        append_text(data,(row['id'],row['source'],row['target'],c[status],*row.get('metadata', [])),font)
         for issue in row['issues']:
             code,name,description,detail = issue_details(issue,language)
             accepted = decisions.get((row['id'],issue),'')
             append_text(warnings,(row['id'],code,name,c['warning'],c['accepted' if accepted else 'review'],
                                   description,detail,c['recommend'],accepted),font)
-    data.auto_filter.ref = f"A1:D{result['total']+1}"
+    data.auto_filter.ref = f"A1:{get_column_letter(4 + len(metadata_columns))}{result['total']+1}"
     warnings.auto_filter.ref = f"A1:I{sum(len(row['issues']) for row in result['rows'])+1}"
     if decisions:
         review = formatted_sheet(book,c['decisions'],(12,32,26,42,28))
