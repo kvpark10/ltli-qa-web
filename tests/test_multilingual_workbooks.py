@@ -16,7 +16,7 @@ from qa_workbooks import FONTS
 class LocalizedWorkbooksTests(unittest.TestCase):
     def test_catalog_complete_and_safe_default(self):
         baseline = MESSAGES['en']
-        self.assertEqual(set(MESSAGES),{'ko','en','zh-CN','zh-TW'})
+        self.assertEqual(set(MESSAGES),{'ko','en','zh-CN','zh-TW','ja'})
         codes = {code.rstrip(':') for group in RULES.values() for code in group}
         for copy in MESSAGES.values():
             self.assertEqual(set(copy),set(baseline))
@@ -55,7 +55,9 @@ class LocalizedWorkbooksTests(unittest.TestCase):
                         self.assertEqual(bool(re.search('[가-힣]', row['source'])), lang == 'en')
                         if row['target']:
                             self.assertEqual(bool(re.search('[가-힣]', row['target'])), lang == 'ko')
-                            self.assertEqual(bool(re.search('[一-鿿]', row['target'])), lang.startswith('zh-'))
+                            if lang != 'ja':
+                                self.assertEqual(bool(re.search('[一-鿿]', row['target'])), lang.startswith('zh-'))
+                            self.assertEqual(bool(re.search('[ぁ-ゖァ-ヺ]', row['target'])), lang == 'ja')
                     with post('check',{'action':'qa','files':files,'explain_id':1,'language':lang}) as response:
                         result=json.load(response)
                     actual=[{issue.split(':')[0] for issue in row['issues']} for row in result['rows']]
