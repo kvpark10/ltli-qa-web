@@ -13,7 +13,7 @@ SAMPLES = json.loads(Path(__file__).with_name("qa_samples.json").read_text(encod
 GLOSSARY_SHEET = 'LTLI Glossary'
 GLOSSARY_HEADER = ('Source term', 'Approved translation')
 WRAP = Alignment(wrap_text=True,vertical='top')
-FONTS = {'ko':'Malgun Gothic','en':'Calibri','zh-CN':'Microsoft YaHei','zh-TW':'Microsoft JhengHei'}
+FONTS = {'ko':'Malgun Gothic','en':'Calibri','zh-CN':'Microsoft YaHei','zh-TW':'Microsoft JhengHei','ja':'Yu Gothic'}
 
 
 def append_text(sheet, values, font=None):

@@ -34,5 +34,33 @@
       {"source":"Welcome, {name}!","target":"歡迎使用！"}
     ],
     "glossary":[{"source_term":"mobile number","approved_targets":["手機號碼"]}]
+  },
+  "ja": {
+    "rows": [
+      {
+        "source": "Save 2 files to the shared folder.",
+        "target": "共有フォルダーに 3 個のファイルを保存してください。"
+      },
+      {
+        "source": "The backup is stored in the cloud.",
+        "target": "バックアップはオンラインストレージに保存されます。"
+      },
+      {
+        "source": "Restart the device after the update.",
+        "target": ""
+      },
+      {
+        "source": "Welcome, {name}!",
+        "target": "ようこそ！"
+      }
+    ],
+    "glossary": [
+      {
+        "source_term": "cloud",
+        "approved_targets": [
+          "クラウド"
+        ]
+      }
+    ]
   }
 }

@@ -474,5 +474,124 @@
       "Multiple spaces": "連續空格",
       "Tab character": "定位字元"
     }
+  },
+  "ja": {
+    "title": "LTLI 翻訳QAレポート",
+    "results": "検査結果",
+    "findings": "警告の詳細",
+    "summary": "検査概要",
+    "segment": "セグメント",
+    "source": "原文",
+    "target": "訳文",
+    "status": "状態",
+    "severity": "重大度",
+    "warning": "警告",
+    "review": "要確認",
+    "accepted": "確認済み",
+    "clear": "警告なし",
+    "code": "ルールコード",
+    "issue": "警告の種類",
+    "description": "説明",
+    "advice": "確認の目安",
+    "detail": "検出内容",
+    "unknown": "ルール警告",
+    "fallback": "原文と訳文の差異を確認してください。",
+    "recommend": "原文と文脈を確認してから、修正するかどうかを判断してください。",
+    "opened": "セグメント{id}を確認しました。",
+    "empty": "現在の検査に警告はありません。",
+    "terms": "指定訳語",
+    "generated": "生成日時（UTC）",
+    "language": "レポート言語",
+    "checks": "検査項目",
+    "total": "全セグメント数",
+    "flagged": "要確認セグメント数",
+    "warnings": "検出された警告数",
+    "accepted_count": "確認済みの警告数",
+    "scope": "検査範囲",
+    "scope_note": "書式と構造の検査結果です。言語品質は別途レビューしてください。",
+    "accepted_at": "確認日時（UTC）",
+    "missing": "翻訳漏れ",
+    "terminology": "用語",
+    "identical": "原文と同一",
+    "numbers": "数値と単位",
+    "structure": "構造",
+    "references": "参照情報",
+    "style": "表記",
+    "sample_download": "サンプルファイルをダウンロード",
+    "sample_error": "サンプルを読み込めませんでした。もう一度お試しください。",
+    "embedded_glossary": "このサンプルに含まれる用語集も検査に使用します。",
+    "issues": {
+      "Missing translation": [
+        "翻訳漏れ",
+        "訳文が空欄です。"
+      ],
+      "Source and target are identical": [
+        "原文と訳文が同一",
+        "固有名詞など、意図的に原文を維持した箇所か確認してください。"
+      ],
+      "Number mismatch": [
+        "数値の不一致",
+        "数値またはその出現回数が異なります。"
+      ],
+      "Unit mismatch": [
+        "単位の不一致",
+        "単位表記を照合してください。"
+      ],
+      "Tag mismatch": [
+        "タグの不一致",
+        "タグまたはその出現回数が異なります。"
+      ],
+      "Placeholder mismatch": [
+        "プレースホルダーの不一致",
+        "プレースホルダーまたはその出現回数が異なります。"
+      ],
+      "Bracket mismatch": [
+        "括弧の不一致",
+        "括弧の種類または数が異なります。"
+      ],
+      "Unbalanced target brackets": [
+        "括弧の対応不良",
+        "訳文の開き括弧と閉じ括弧が対応していません。"
+      ],
+      "URL mismatch": [
+        "URLの不一致",
+        "URLまたはその出現回数が異なります。"
+      ],
+      "Email mismatch": [
+        "メールアドレスの不一致",
+        "メールアドレスまたはその出現回数が異なります。"
+      ],
+      "File name mismatch": [
+        "ファイル名の不一致",
+        "ファイル名や拡張子を照合してください。"
+      ],
+      "Shortcut mismatch": [
+        "ショートカットの不一致",
+        "キーボードショートカットが異なります。"
+      ],
+      "Punctuation mismatch": [
+        "句読点の不一致",
+        "文末の句読点が異なります。意図した表記か確認してください。"
+      ],
+      "Whitespace warning": [
+        "空白の警告",
+        "訳文に先頭・末尾の空白、連続する空白、またはタブが含まれています。"
+      ],
+      "Terminology mismatch": [
+        "用語の不一致",
+        "用語集の指定訳語を確認してください。"
+      ]
+    },
+    "report_limit": "警告が多すぎます。検査範囲を絞るか、ファイルを分割してください。",
+    "decisions": "確認履歴",
+    "sample_run": "サンプルを検査",
+    "report_started": "レポートのダウンロードを開始しました。",
+    "count": "件数",
+    "whitespace_details": {
+      "Leading space": "先頭の空白",
+      "Trailing space": "末尾の空白",
+      "Multiple spaces": "連続する空白",
+      "Tab character": "タブ文字"
+    }
   }
 }
