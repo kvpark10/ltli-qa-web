@@ -818,6 +818,7 @@ if run_requested:
             "Issue Type": issue_types,
             "Count": [counts[issue] for issue in issue_types],
         })
+        st.session_state["qa_result_pane_open"] = True
         st.session_state["qa_result_dataframe"] = result_dataframe
         st.session_state["qa_error_dataframe"] = error_dataframe
         st.session_state["qa_issue_summary"] = issue_summary
@@ -834,48 +835,70 @@ if run_requested:
         track_event("qa_failed", {"stage": "qa_processing", "error_type": type(error).__name__})
         st.error(L('qa_failed', 'QA could not be completed. Please check the input and try again.'))
 
+fullscreen_exit = "전체 화면 닫기" if UI_LANGUAGE == "ko" else "Close fullscreen"
+st.markdown("""
+<style>
+[data-testid="stElementToolbar"] button[aria-label^="Close fullscreen"] {width:auto;padding-inline:.6rem}
+[data-testid="stElementToolbar"] button[aria-label^="Close fullscreen"]::after {content:"__LTLI_FULLSCREEN_EXIT__";margin-inline-start:.35rem}
+.st-key-ltli_qa_results {position:fixed;inset:3.75rem 0 0 auto;width:57%;z-index:100;overflow:auto;
+  overscroll-behavior:contain;background:var(--background-color);border-left:1px solid var(--secondary-background-color);
+  padding:1rem 1.5rem 2rem}
+.stMain:has(.st-key-ltli_qa_results) {width:43%;flex:0 0 43%}
+@media(max-width:1049px){.st-key-ltli_qa_results{width:100%}.stMain:has(.st-key-ltli_qa_results){width:100%;flex:1}}
+</style>
+""".replace("__LTLI_FULLSCREEN_EXIT__", fullscreen_exit), unsafe_allow_html=True)
 if "qa_result_dataframe" in st.session_state:
-    result_dataframe = st.session_state["qa_result_dataframe"]
-    error_dataframe = st.session_state["qa_error_dataframe"]
-    issue_summary = st.session_state["qa_issue_summary"]
-    total_segments = len(result_dataframe)
-    error_count = len(error_dataframe)
-    pass_count = total_segments - error_count
-    pass_rate = pass_count / total_segments * 100 if total_segments else 0
-
-    st.markdown(f'<div class="ltli-section">{L("results", "3. QA results")}</div>', unsafe_allow_html=True)
-    column1, column2, column3, column4 = st.columns(4)
-    column1.metric(L('total', 'Total Segments'), total_segments, help=help_for('total', UI_LANGUAGE))
-    column2.metric(L('passed', 'Passed'), pass_count, help=help_for('passed', UI_LANGUAGE))
-    column3.metric(L('errors', 'Issues'), error_count, help=help_for('issues', UI_LANGUAGE))
-    column4.metric(L('pass_rate', 'Pass Rate'), f"{pass_rate:.1f}%", help=help_for('rate', UI_LANGUAGE))
-    st.info(notice_for('results', UI_LANGUAGE))
-    st.markdown(L("overview", "#### Issue overview"))
-    st.caption(notice_for("summary", UI_LANGUAGE))
-    st.dataframe(localized_results(issue_summary, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
-    st.markdown(L("all_segments", "#### All segments"))
-    st.dataframe(localized_results(result_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
-    if error_count:
-        st.error(L('issue_count', '{count} segment(s) contain QA issues.').format(count=error_count))
-        st.markdown(L("review_issues", "#### Issues requiring review"))
-        st.dataframe(localized_results(error_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
+    result_open = st.session_state.get("qa_result_pane_open", True)
+    if not result_open:
+        if st.button("QA 결과 열기" if UI_LANGUAGE == "ko" else "Open QA results"):
+            st.session_state["qa_result_pane_open"] = True
+            st.rerun()
     else:
-        st.success(L("no_issues", "No QA issues were found."))
+        with st.container(key="ltli_qa_results"):
+            if st.button("작업창 닫기" if UI_LANGUAGE == "ko" else "Close workspace"):
+                st.session_state["qa_result_pane_open"] = False
+                st.rerun()
+            result_dataframe = st.session_state["qa_result_dataframe"]
+            error_dataframe = st.session_state["qa_error_dataframe"]
+            issue_summary = st.session_state["qa_issue_summary"]
+            total_segments = len(result_dataframe)
+            error_count = len(error_dataframe)
+            pass_count = total_segments - error_count
+            pass_rate = pass_count / total_segments * 100 if total_segments else 0
 
-    def record_report_download():
-        track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
+            st.markdown(f'<div class="ltli-section">{L("results", "3. QA results")}</div>', unsafe_allow_html=True)
+            column1, column2, column3, column4 = st.columns(4)
+            column1.metric(L('total', 'Total Segments'), total_segments, help=help_for('total', UI_LANGUAGE))
+            column2.metric(L('passed', 'Passed'), pass_count, help=help_for('passed', UI_LANGUAGE))
+            column3.metric(L('errors', 'Issues'), error_count, help=help_for('issues', UI_LANGUAGE))
+            column4.metric(L('pass_rate', 'Pass Rate'), f"{pass_rate:.1f}%", help=help_for('rate', UI_LANGUAGE))
+            st.info(notice_for('results', UI_LANGUAGE))
+            st.markdown(L("overview", "#### Issue overview"))
+            st.caption(notice_for("summary", UI_LANGUAGE))
+            st.dataframe(localized_results(issue_summary, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
+            st.markdown(L("all_segments", "#### All segments"))
+            st.dataframe(localized_results(result_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
+            if error_count:
+                st.error(L('issue_count', '{count} segment(s) contain QA issues.').format(count=error_count))
+                st.markdown(L("review_issues", "#### Issues requiring review"))
+                st.dataframe(localized_results(error_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
+            else:
+                st.success(L("no_issues", "No QA issues were found."))
 
-    st.caption(notice_for("download", UI_LANGUAGE))
-    st.download_button(
-        help=help_for("report", UI_LANGUAGE),
-        label=L("download", "Download Excel report  ↓"),
-        data=localized_report(report_from_frames(result_dataframe, error_count, bool(glossary)), WORKBOOK_LOCALE),
-        file_name=report_filename(WORKBOOK_LOCALE),
-        key=f"qa_localized_report_{WORKBOOK_LOCALE}",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        on_click=record_report_download,
-        use_container_width=True,
-    )
+            def record_report_download():
+                track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
+
+            st.caption(notice_for("download", UI_LANGUAGE))
+            st.download_button(
+                help=help_for("report", UI_LANGUAGE),
+                label=L("download", "Download Excel report  ↓"),
+                data=localized_report(report_from_frames(result_dataframe, error_count, bool(glossary)), WORKBOOK_LOCALE),
+                file_name=report_filename(WORKBOOK_LOCALE),
+                key=f"qa_localized_report_{WORKBOOK_LOCALE}",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                on_click=record_report_download,
+                use_container_width=True,
+            )
 
 
 st.markdown(
