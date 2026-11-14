@@ -747,7 +747,7 @@ upload_event_key = "|".join([input_mode, *file_formats, *size_buckets])
 # Use content identity for results. Similar-sized uploads are separate work.
 result_input_key = (input_mode, *(sha256(item.getbuffer()).digest() for item in analytics_files))
 if st.session_state.get("qa_result_input_key") != result_input_key:
-    for result_key in ("qa_result_dataframe", "qa_error_dataframe", "qa_issue_summary"):
+    for result_key in ("qa_result_dataframe", "qa_error_dataframe", "qa_issue_summary", "qa_result_pane_open"):
         st.session_state.pop(result_key, None)
     st.session_state["qa_result_input_key"] = result_input_key
 track_once(
@@ -848,7 +848,7 @@ st.markdown("""
 </style>
 """.replace("__LTLI_FULLSCREEN_EXIT__", fullscreen_exit), unsafe_allow_html=True)
 if "qa_result_dataframe" in st.session_state:
-    result_open = st.session_state.get("qa_result_pane_open", True)
+    result_open = st.session_state.get("qa_result_pane_open", False)
     if not result_open:
         if st.button("QA 결과 열기" if UI_LANGUAGE == "ko" else "Open QA results"):
             st.session_state["qa_result_pane_open"] = True
