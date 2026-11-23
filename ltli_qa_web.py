@@ -86,6 +86,9 @@ LANGUAGE = {
 
 LANGUAGE.update(json.loads((Path(__file__).parent / "qa_ui_zh.json").read_text(encoding="utf-8")))
 
+LANGUAGE.update(json.loads((Path(__file__).parent / "qa_ui_additional.json").read_text(encoding="utf-8")))
+
+
 def normalize_ui_language(value):
     value = str(value).lower().replace("_", "-")
     if value.startswith("zh"):
@@ -95,7 +98,8 @@ def normalize_ui_language(value):
         if "hant" in parts or any(p in parts for p in ("tw", "hk", "mo")):
             return "zh-Hant"
         return "zh-Hans"
-    return "ko" if value.startswith("ko") else "en"
+    primary = value.split("-")[0]
+    return primary if primary in LANGUAGE else "en"
 
 query_language = str(st.query_params.get("lang", ""))
 try:
@@ -106,7 +110,8 @@ detected_language = normalize_ui_language(query_language or browser_language)
 if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
-language_labels = {"한국어": "ko", "English": "en", "简体中文": "zh-Hans", "繁體中文": "zh-Hant"}
+language_labels = {"한국어": "ko", "English": "en", "简体中文": "zh-Hans", "繁體中文": "zh-Hant",
+                   "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es", "العربية": "ar"}
 with st.container(key="qa_language_selector"):
     selected_label = st.selectbox(
         "Language / 언어",
@@ -134,7 +139,15 @@ UI_LANGUAGE = st.session_state["ui_language"]
 def L(key, english):
     return LANGUAGE.get(UI_LANGUAGE, {}).get(key, english)
 
-WORKBOOK_LOCALE = {"zh-Hans": "zh-CN", "zh-Hant": "zh-TW"}.get(UI_LANGUAGE, UI_LANGUAGE)
+WORKBOOK_LOCALE = {"ko": "ko", "zh-Hans": "zh-CN", "zh-Hant": "zh-TW"}.get(UI_LANGUAGE, "en")
+st.html(
+    "<script>document.documentElement.lang = "
+    + json.dumps(UI_LANGUAGE)
+    + "; document.documentElement.dir = "
+    + json.dumps("rtl" if UI_LANGUAGE == "ar" else "ltr")
+    + ";</script>",
+    unsafe_allow_javascript=True,
+)
 
 
 def localized_results(frame, language):
@@ -600,7 +613,7 @@ with st.expander(
         )
     )
     st.download_button(
-        label=messages(WORKBOOK_LOCALE)["sample_download"],
+        label=L("sample_download", messages(WORKBOOK_LOCALE)["sample_download"]),
         data=sample_workbook(SAMPLES[WORKBOOK_LOCALE]),
         file_name=f"ltli_qa_sample_{WORKBOOK_LOCALE}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -803,7 +816,7 @@ if run_requested:
         track_event("qa_failed", {"stage": "qa_processing", "error_type": type(error).__name__})
         st.error(L('qa_failed', 'QA could not be completed. Please check the input and try again.'))
 
-fullscreen_exit = "전체 화면 닫기" if UI_LANGUAGE == "ko" else "Close fullscreen"
+fullscreen_exit = "전체 화면 닫기" if UI_LANGUAGE == "ko" else L("close_fullscreen", "Close fullscreen")
 st.markdown("""
 <style>
 [data-testid="stElementToolbar"] button[aria-label^="Close fullscreen"] {width:auto;padding-inline:.6rem}
@@ -818,12 +831,12 @@ st.markdown("""
 if "qa_result_dataframe" in st.session_state:
     result_open = st.session_state.get("qa_result_pane_open", False)
     if not result_open:
-        if st.button("QA 결과 열기" if UI_LANGUAGE == "ko" else "Open QA results"):
+        if st.button("QA 결과 열기" if UI_LANGUAGE == "ko" else L("open_results", "Open QA results")):
             st.session_state["qa_result_pane_open"] = True
             st.rerun()
     else:
         with st.container(key="ltli_qa_results"):
-            if st.button("작업창 닫기" if UI_LANGUAGE == "ko" else "Close workspace"):
+            if st.button("작업창 닫기" if UI_LANGUAGE == "ko" else L("close_workspace", "Close workspace")):
                 st.session_state["qa_result_pane_open"] = False
                 st.rerun()
             result_dataframe = st.session_state["qa_result_dataframe"]
