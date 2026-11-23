@@ -98,7 +98,11 @@ def normalize_ui_language(value):
         if "hant" in parts or any(p in parts for p in ("tw", "hk", "mo")):
             return "zh-Hant"
         return "zh-Hans"
-    primary = value.split("-")[0]
+    primary, _, region = value.partition("-")
+    if primary == "en" and region in ("au", "nz"):
+        return f"en-{region.upper()}"
+    if primary == "ar":
+        return "en"
     return primary if primary in LANGUAGE else "en"
 
 query_language = str(st.query_params.get("lang", ""))
@@ -111,7 +115,7 @@ if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
 language_labels = {"한국어": "ko", "English": "en", "简体中文": "zh-Hans", "繁體中文": "zh-Hant", "日本語": "ja",
-                   "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es", "العربية": "ar"}
+                   "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es", "English (Australia)": "en-AU", "English (New Zealand)": "en-NZ"}
 with st.container(key="qa_language_selector"):
     selected_label = st.selectbox(
         "Language / 언어",
