@@ -32,12 +32,10 @@ st.set_page_config(
 
 LANGUAGE = {
     "ko": {
-        "hero_title": "반복적인 번역 QA를<br>더 간편하게.", "hero_text": "숫자, 태그, 자리표시자 등 번역문에서 발생하기 쉬운 문제를 자동으로 점검합니다. 검사 결과를 확인하고 Excel 보고서로 다운로드하세요.",
-        "brand_name": "LTLI · 언어와 기술의 연결", "public_beta": "LTLI QA", "free": "무료 이용", "formats": "XLSX · DOCX · TXT", "no_account": "회원가입 불필요",
-        "step1": "파일 추가", "step1_text": "이중언어 XLSX 또는 정렬된 파일 쌍을 업로드합니다.", "step2": "14개 QA 검사 실행", "step2_text": "숫자, 태그, 공백 등을 확인합니다.", "step3": "결과 내보내기", "step3_text": "공유 가능한 Excel QA 보고서를 다운로드합니다.",
-        "policy": "🔒 업로드 전 확인 — 파일 업로드 및 데이터 보호 안내", "policy_text": "공개 가능한 자료만 업로드하시기 바랍니다. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
-        "feedback": "베타 피드백", "feedback_intro": "여러분의 의견은 LTLI QA 개선에 활용됩니다. 언제든 제출할 수 있습니다.", "feedback_callout": "💬 QA를 사용해 보셨나요? 2분 피드백을 남겨 주세요.", "feedback_after_qa": "💬 결과는 어떠셨나요? 베타 피드백 남기기", "feedback_after_qa_text": "여러분의 실제 사용 경험은 검사 정확도와 다음 기능의 우선순위를 정하는 데 큰 도움이 됩니다.", "satisfaction": "전체 만족도", "helpful": "결과가 실제 언어 검수에 도움이 되었나요?", "false_positive": "오탐은 어느 정도였나요?", "useful": "가장 유용한 검사", "features": "추가로 필요한 기능", "reuse": "다시 사용할 의향이 있나요?", "role": "직업군(선택)", "comments": "자유 의견(선택)", "interview": "후속 인터뷰 이메일(선택)", "consent": "베타 인터뷰 연락 목적으로 이 이메일을 저장하는 데 동의합니다.", "privacy_caption": "익명 피드백에는 무작위 세션 ID만 사용합니다. 자유 의견에 개인정보·고객 기밀·외교문서·미공개 정보를 입력하지 마십시오. 선택 이메일은 사용 이벤트와 분리해 저장합니다.", "send": "피드백 보내기", "thanks": "감사합니다. 피드백이 제출되었습니다.",
-        "add_files": "1. 파일 추가", "choose_format": "번역 작업에 맞는 입력 형식을 선택하세요.", "xlsx_tab": "📊 이중언어 XLSX", "pair_tab": "📄 DOCX / TXT 파일 쌍", "begin": "위 탭에서 형식을 선택하고 파일을 업로드하면 시작됩니다.", "drop_xlsx": "이중언어 스프레드시트를 업로드하세요", "required_columns": "필수 열: Source 및 Target · 최대 10MB", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.",
+        "flow": "파일 추가 → 검사 → 보고서 다운로드", "file_limit": "파일당 최대 10MB",
+        "hero_title": "번역 QA", "hero_text": "원문과 번역문의 숫자·태그·자리표시자 등을 비교하고, 검사 결과를 Excel 보고서로 내려받으세요.",
+        "policy": "데이터 보호 안내 · 업로드 전 확인", "policy_text": "공개 가능한 자료만 업로드하시기 바랍니다. 개인정보, 고객 기밀, 외교문서 또는 미공개 상업 자료를 업로드하지 마십시오. 파일당 최대 크기는 10MB입니다.",
+        "add_files": "1. 파일 추가", "xlsx_tab": "원문·번역문이 한 XLSX에 있음", "pair_tab": "원문·번역문이 별도 DOCX·TXT 파일에 있음", "drop_xlsx": "XLSX 파일 선택", "required_columns": "필수 열: Source 및 Target", "source_file": "원문 파일", "target_file": "번역문 파일", "pair_help": "같은 형식의 파일 두 개를 사용하세요. DOCX는 비어 있지 않은 문단, TXT는 비어 있지 않은 줄을 기준으로 정렬합니다.",
         "review": "2. 미리보기 및 QA 실행", "ready": "개의 정렬된 세그먼트가 준비되었습니다. 미리보기를 확인한 후 검사를 시작하세요.", "run": "QA 검사 실행 →", "results": "3. QA 결과", "overview": "#### 오류 요약", "all_segments": "#### 전체 세그먼트", "review_issues": "#### 검토가 필요한 오류", "no_issues": "QA 오류가 발견되지 않았습니다.", "download": "Excel 보고서 다운로드 ↓",
         'contact': '문의 및 제안: contact@ltli.kr · 홈페이지: https://ltli.ai',
         'xlsx_help': '스프레드시트에는 Source 열과 Target 열이 각각 하나씩 있어야 합니다.',
@@ -170,8 +168,7 @@ def report_from_frames(frame, error_count, glossary_used):
             "accepted_count": 0, "decisions": [], "metadata_columns": extra_columns}
 
 
-hero_html = (
-    """
+st.markdown("""
     <style>
     :root {
         --ltli-navy: #10223d;
@@ -188,28 +185,21 @@ hero_html = (
             #fbfcff;
         color: var(--ltli-navy);
     }
-    .block-container {max-width: 1180px; padding-top: 5.5rem; padding-bottom: 4rem;}
+    .block-container {max-width: 1180px; padding-top: 3.25rem; padding-bottom: 4rem;}
     .ltli-hero {
-        position: relative; overflow: hidden; padding: 2.25rem 2.4rem;
+        position: relative; overflow: hidden; padding: 1.2rem 1.5rem;
         border: 1px solid rgba(255,255,255,.65); border-radius: 28px;
         background: linear-gradient(125deg, #142d62 0%, #365ce7 55%, #7c4dff 100%);
         color: white; box-shadow: 0 18px 50px rgba(49,87,226,.20);
-        margin-bottom: 1.25rem;
+        margin-bottom: .25rem;
     }
     .ltli-hero:after {
         content: ""; position: absolute; width: 270px; height: 270px;
         border-radius: 50%; right: -70px; top: -120px;
         background: rgba(255,255,255,.12);
     }
-    .ltli-brand {font-size: .82rem; font-weight: 750; letter-spacing: .16em; opacity: .78;}
-    .ltli-hero h1 {font-size: clamp(2rem, 4vw, 3.35rem); line-height: 1.05; margin: .65rem 0 .75rem; color: white;}
+    .ltli-hero h1 {font-size: clamp(1.65rem, 3vw, 2.25rem); line-height: 1.15; margin: 0 0 .4rem; color: white;}
     .ltli-hero p {font-size: 1.05rem; max-width: 690px; opacity: .92; margin: 0;}
-    .ltli-badges {display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.35rem;}
-    .ltli-badge {padding:.42rem .72rem; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); font-size:.78rem;}
-    .ltli-steps {display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin:1rem 0 1.7rem;}
-    .ltli-step {background:white; border:1px solid var(--ltli-line); border-radius:16px; padding:.85rem 1rem; box-shadow:0 6px 18px rgba(16,34,61,.045);}
-    .ltli-step strong {display:block; font-size:.86rem; color:var(--ltli-cobalt); margin-bottom:.15rem;}
-    .ltli-step span {font-size:.82rem; color:#63708a;}
     .ltli-section {font-size:1.35rem; font-weight:760; color:var(--ltli-navy); margin:1.6rem 0 .25rem;}
     div[data-testid="stFileUploader"] {background:white; border:1px solid var(--ltli-line); border-radius:18px; padding:1rem 1rem .45rem; box-shadow:0 8px 24px rgba(16,34,61,.05);}
     div[data-testid="stFileUploaderDropzone"] {background:var(--ltli-surface); border:1.5px dashed #b9c5e9; border-radius:14px;}
@@ -222,51 +212,18 @@ hero_html = (
         box-shadow:0 8px 20px rgba(49,87,226,.18);
     }
     .ltli-footer {text-align:center; color:#748098; font-size:.78rem; margin-top:2.5rem;}
-    .ltli-feedback-callout {margin:1rem 0; padding:1rem 1.15rem; border-radius:16px; color:#24376b; font-weight:700; background:linear-gradient(110deg,#eef3ff,#f4edff); border:1px solid #cdd8ff; box-shadow:0 8px 24px rgba(49,87,226,.08);}
     @media (max-width: 700px) {
-        .block-container {padding-top:5rem;}
-        .ltli-hero {padding:1.6rem 1.3rem; border-radius:22px;}
-        .ltli-steps {grid-template-columns:1fr;}
+        .block-container {padding-top:3.25rem;}
+        .ltli-hero {padding:1rem; border-radius:18px;}
     }
     </style>
-    <section class="ltli-hero">
-      <div class="ltli-brand">LTLI · Language &amp; Technology</div>
-      <h1>Simplify Routine<br>Translation QA.</h1>
-      <p>Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report.</p>
-      <div class="ltli-badges">
-        <span class="ltli-badge">Free to use</span>
-        <span class="ltli-badge">XLSX · DOCX · TXT</span><span class="ltli-badge">No account required</span>
-      </div>
-    </section>
-    <div class="ltli-steps">
-      <div class="ltli-step"><strong>01 · Add your files</strong><span>Upload bilingual XLSX or an aligned file pair.</span></div>
-      <div class="ltli-step"><strong>02 · Run 14 QA checks</strong><span>Check numbers, tags, spacing, and more.</span></div>
-      <div class="ltli-step"><strong>03 · Export results</strong><span>Download a shareable Excel QA report.</span></div>
-    </div>
-    """,
+""", unsafe_allow_html=True)
+st.markdown(
+    f'<section class="ltli-hero"><h1>{L("hero_title", "Translation QA")}</h1>'
+    f'<p>{L("hero_text", "Compare numbers, tags, placeholders, and more in the source and translation. Download the findings as an Excel report.")}</p></section>',
+    unsafe_allow_html=True,
 )
-hero_html = hero_html[0]
-for source, target in {
-    "Simplify Routine<br>Translation QA.": L("hero_title", "Simplify Routine<br>Translation QA."),
-    "Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report.": L("hero_text", "Automatically check translations for issues involving numbers, tags, placeholders, and more. Review the findings and download an Excel QA report."),
-    "LTLI · Language &amp; Technology": L("brand_name", "LTLI · Language &amp; Technology"), "Public beta": L("public_beta", "LTLI QA"), "Free to use": L("free", "Free to use"), "No account required": L("no_account", "No account required"),
-    "Add your files": L("step1", "Add your files"), "Upload bilingual XLSX or an aligned file pair.": L("step1_text", "Upload bilingual XLSX or an aligned file pair."),
-    "Run 14 QA checks": L("step2", "Run 14 QA checks"), "Check numbers, tags, spacing, and more.": L("step2_text", "Check numbers, tags, spacing, and more."),
-    "Export results": L("step3", "Export results"), "Download a shareable Excel QA report.": L("step3_text", "Download a shareable Excel QA report."),
-}.items():
-    hero_html = hero_html.replace(source, target)
-st.markdown(hero_html, unsafe_allow_html=True)
-
-guide_title, guide_steps = GUIDE.get(UI_LANGUAGE, GUIDE["en"])
-with st.expander(guide_title, expanded=False):
-    for step in guide_steps:
-        st.write(step)
-
-with st.expander(L("policy", "🔒 Before you upload — file handling policy"), expanded=False):
-    st.warning(
-        L("policy_text", "Use public test data only. Do not upload personal information, customer-confidential files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB.")
-    )
-    st.caption(L('contact', 'Inquiries & Suggestions: contact@ltli.kr · Website: https://ltli.ai'))
+st.caption(L("flow", "Add files → Run QA → Download report"))
 
 track_once("session_started", "session_started", {"app_version": APP_VERSION})
 
@@ -589,15 +546,51 @@ def load_glossary(glossary_file):
 # --------------------------------------------------
 # 파일 업로드
 # --------------------------------------------------
-st.markdown(f'<div class="ltli-section">{L("add_files", "1. Add files")}</div>', unsafe_allow_html=True)
-st.caption(L("choose_format", "Choose the input format that matches your translation workflow."))
+st.subheader(L("add_files", "1. Add files"))
+with st.expander(L("policy", "Data protection · read before uploading")):
+    st.warning(L(
+        "policy_text",
+        "Use public test data only. Do not upload personal information, customer-confidential files, diplomatic documents, or unpublished commercial content. Maximum file size: 10 MB.",
+    ))
+    st.caption(L('contact', 'Inquiries & Suggestions: contact@ltli.kr · Website: https://ltli.ai'))
+
+xlsx_tab, paired_tab = st.tabs([L("xlsx_tab", "Source and translation in one XLSX"), L("pair_tab", "Separate DOCX or TXT files")])
+
+uploaded_file = None
+source_file = None
+target_file = None
+
+with xlsx_tab:
+    uploaded_file = st.file_uploader(
+        L("drop_xlsx", "Choose an XLSX file"),
+        type=["xlsx"],
+        help=help_for('xlsx', UI_LANGUAGE),
+        key="bilingual_xlsx_uploader",
+        max_upload_size=10,
+    )
+    st.caption(f'{L("required_columns", "Required columns: Source and Target")} · {L("file_limit", "Up to 10 MB per file")}')
+
+with paired_tab:
+    source_column, target_column = st.columns(2)
+    with source_column:
+        source_file = st.file_uploader(
+            L("source_file", "Source file"), type=["docx", "txt"], max_upload_size=10, key="source_document_uploader", help=help_for("source", UI_LANGUAGE)
+        )
+    with target_column:
+        target_file = st.file_uploader(
+            L("target_file", "Target file"), type=["docx", "txt"], key="target_document_uploader", help=help_for("target", UI_LANGUAGE)
+        )
+    st.caption(L("file_limit", "Up to 10 MB per file"))
+    st.caption(
+        L("pair_help", "Use two files of the same type. DOCX is aligned by non-empty paragraph; TXT is aligned by non-empty line.")
+    )
 
 # Download examples before uploading files. XLSX uses Source/Target columns;
 # DOCX requires a separate source and target document.
 downloads_dir = Path(__file__).resolve().parent / "qa_downloads"
 
 with st.expander(
-    L("downloads_title", "📥 Download sample files and blank templates"),
+    L("downloads_title", "Download sample files and templates"),
     expanded=False,
 ):
     st.caption(
@@ -636,34 +629,10 @@ with st.expander(
         )
     )
 
-xlsx_tab, paired_tab = st.tabs([L("xlsx_tab", "📊 Bilingual XLSX"), L("pair_tab", "📄 Separate DOCX / TXT")])
-
-uploaded_file = None
-source_file = None
-target_file = None
-
-with xlsx_tab:
-    uploaded_file = st.file_uploader(
-        L("drop_xlsx", "Drop a bilingual spreadsheet here"),
-        type=["xlsx"],
-        help=help_for('xlsx', UI_LANGUAGE),
-        key="bilingual_xlsx_uploader",
-    )
-    st.caption(L("required_columns", "Required columns: Source and Target · Maximum 10 MB"))
-
-with paired_tab:
-    source_column, target_column = st.columns(2)
-    with source_column:
-        source_file = st.file_uploader(
-            L("source_file", "Source file"), type=["docx", "txt"], key="source_document_uploader", help=help_for("source", UI_LANGUAGE)
-        )
-    with target_column:
-        target_file = st.file_uploader(
-            L("target_file", "Target file"), type=["docx", "txt"], key="target_document_uploader", help=help_for("target", UI_LANGUAGE)
-        )
-    st.caption(
-        L("pair_help", "Use two files of the same type. DOCX is aligned by non-empty paragraph; TXT is aligned by non-empty line.")
-    )
+guide_title, guide_steps = GUIDE.get(UI_LANGUAGE, GUIDE["en"])
+with st.expander(guide_title):
+    for step in guide_steps:
+        st.write(step)
 
 if uploaded_file is not None:
     input_mode = "Bilingual XLSX"
@@ -676,7 +645,6 @@ alignment_metadata = None
 glossary = []
 
 if input_mode is None:
-    st.info(L("begin", "Choose a tab above and upload your file(s) to begin."), icon="👆")
     st.stop()
 elif input_mode == "Bilingual XLSX":
     if uploaded_file is None:
