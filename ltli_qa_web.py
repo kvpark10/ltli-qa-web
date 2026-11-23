@@ -184,51 +184,29 @@ def report_from_frames(frame, error_count, glossary_used):
 st.markdown("""
     <style>
     :root {
-        --ltli-navy: #10223d;
-        --ltli-cobalt: #3157e2;
-        --ltli-violet: #7c4dff;
-        --ltli-cyan: #25b6d2;
-        --ltli-surface: #f6f8ff;
-        --ltli-line: #e3e8f5;
-    }
-    .stApp {
-        background:
-            radial-gradient(circle at 92% 5%, rgba(124,77,255,.10), transparent 25rem),
-            radial-gradient(circle at 3% 25%, rgba(37,182,210,.08), transparent 24rem),
-            #fbfcff;
-        color: var(--ltli-navy);
+        --ltli-ink: #181818;
+        --ltli-muted: #606060;
+        --ltli-line: #e5e5e5;
+        --ltli-soft: #f6f6f6;
     }
     .block-container {max-width: 1180px; padding-top: 3.25rem; padding-bottom: 4rem;}
-    .ltli-hero {
-        position: relative; overflow: hidden; padding: 1.2rem 1.5rem;
-        border: 1px solid rgba(255,255,255,.65); border-radius: 28px;
-        background: linear-gradient(125deg, #142d62 0%, #365ce7 55%, #7c4dff 100%);
-        color: white; box-shadow: 0 18px 50px rgba(49,87,226,.20);
-        margin-bottom: .25rem;
+    .ltli-hero {padding: .65rem 0 1.2rem; border-block-end: 1px solid var(--ltli-line);}
+    .ltli-hero h1 {
+        color: var(--ltli-ink);
+        font-size: clamp(1.85rem, 4vw, 3.15rem);
+        line-height: 1.12;
+        margin: 0 0 .5rem;
     }
-    .ltli-hero:after {
-        content: ""; position: absolute; width: 270px; height: 270px;
-        border-radius: 50%; right: -70px; top: -120px;
-        background: rgba(255,255,255,.12);
+    .ltli-hero p {color: var(--ltli-muted); max-width: 690px; margin: 0; line-height: 1.6;}
+    .ltli-section {font-size: 1.35rem; font-weight: 700; color: var(--ltli-ink); margin: 1.6rem 0 .25rem;}
+    div[data-testid="stFileUploader"], div[data-testid="stMetric"] {
+        background: #fff; border: 1px solid var(--ltli-line); border-radius: 12px; padding: 1rem;
     }
-    .ltli-hero h1 {font-size: clamp(1.65rem, 3vw, 2.25rem); line-height: 1.15; margin: 0 0 .4rem; color: white;}
-    .ltli-hero p {font-size: 1.05rem; max-width: 690px; opacity: .92; margin: 0;}
-    .ltli-section {font-size:1.35rem; font-weight:760; color:var(--ltli-navy); margin:1.6rem 0 .25rem;}
-    div[data-testid="stFileUploader"] {background:white; border:1px solid var(--ltli-line); border-radius:18px; padding:1rem 1rem .45rem; box-shadow:0 8px 24px rgba(16,34,61,.05);}
-    div[data-testid="stFileUploaderDropzone"] {background:var(--ltli-surface); border:1.5px dashed #b9c5e9; border-radius:14px;}
-    div[data-testid="stMetric"] {background:white; border:1px solid var(--ltli-line); border-radius:16px; padding:1rem; box-shadow:0 6px 20px rgba(16,34,61,.05);}
-    div[data-testid="stMetricValue"] {color:var(--ltli-cobalt);}
-    div[data-baseweb="tab-list"] {gap:.35rem; background:#eef2ff; padding:.3rem; border-radius:14px;}
-    button[data-baseweb="tab"] {border-radius:10px;}
-    .stButton > button[kind="primary"], .stDownloadButton > button {
-        min-height:3rem; border-radius:12px; font-weight:700; border:0;
-        box-shadow:0 8px 20px rgba(49,87,226,.18);
-    }
-    .ltli-footer {text-align:center; color:#748098; font-size:.78rem; margin-top:2.5rem;}
-    @media (max-width: 700px) {
-        .block-container {padding-top:3.25rem;}
-        .ltli-hero {padding:1rem; border-radius:18px;}
-    }
+    div[data-testid="stFileUploaderDropzone"] {background: var(--ltli-soft); border: 1px dashed #a8a8a8; border-radius: 9px;}
+    div[data-testid="stMetricValue"] {color: var(--ltli-ink);}
+    div[data-baseweb="tab-list"] {gap: .35rem; overflow-x: auto;}
+    .stButton > button, .stDownloadButton > button {min-height: 44px; font-weight: 600;}
+    .ltli-footer {text-align: center; color: var(--ltli-muted); font-size: .78rem; margin-top: 2.5rem;}
     </style>
 """, unsafe_allow_html=True)
 st.markdown(
