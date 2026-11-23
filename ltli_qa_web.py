@@ -105,18 +105,18 @@ def normalize_ui_language(value):
         return "en"
     return primary if primary in LANGUAGE else "en"
 
-query_language = str(st.query_params.get("lang", ""))
-try:
-    browser_language = str(getattr(st.context, "locale", "en")).lower()
-except (AttributeError, RuntimeError):
-    browser_language = "en"
-detected_language = normalize_ui_language(query_language or browser_language)
-if "ui_language" not in st.session_state:
-    st.session_state["ui_language"] = detected_language
-
 language_labels = {"English (Australia)": "en-AU", "English (New Zealand)": "en-NZ",
                    "English": "en", "한국어": "ko", "简体中文": "zh-Hans", "繁體中文": "zh-Hant", "日本語": "ja",
                    "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es"}
+supported_languages = set(language_labels.values())
+if "ui_language" not in st.session_state:
+    requested = str(st.query_params.get("lang", ""))
+    saved = st.context.cookies.get("ltli_ui_locale")
+    if requested and requested.split("-")[0].lower() in {"en", "ko", "zh", "ja", "de", "fr", "it", "es"}:
+        st.session_state["ui_language"] = normalize_ui_language(requested)
+    else:
+        st.session_state["ui_language"] = saved if saved in supported_languages else "en-AU"
+
 with st.container(key="qa_language_selector"):
     selected_label = st.selectbox(
         "Language / 언어",
@@ -136,10 +136,15 @@ st.markdown("""
 selected_language = language_labels[selected_label]
 if selected_language != st.session_state["ui_language"]:
     st.session_state["ui_language"] = selected_language
+    st.session_state["_save_ui_language"] = selected_language
     st.query_params["lang"] = selected_language
     st.rerun()
 
 UI_LANGUAGE = st.session_state["ui_language"]
+if (choice := st.session_state.pop("_save_ui_language", None)) in supported_languages:
+    cookie = f"ltli_ui_locale={choice}; Path=/; Max-Age=31536000; SameSite=Lax; Secure"
+    st.html("<script>document.cookie = " + json.dumps(cookie) + ";</script>",
+            unsafe_allow_javascript=True)
 
 def L(key, english):
     return LANGUAGE.get(UI_LANGUAGE, {}).get(key, english)
