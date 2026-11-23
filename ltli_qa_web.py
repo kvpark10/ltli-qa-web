@@ -114,8 +114,9 @@ detected_language = normalize_ui_language(query_language or browser_language)
 if "ui_language" not in st.session_state:
     st.session_state["ui_language"] = detected_language
 
-language_labels = {"한국어": "ko", "English": "en", "简体中文": "zh-Hans", "繁體中文": "zh-Hant", "日本語": "ja",
-                   "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es", "English (Australia)": "en-AU", "English (New Zealand)": "en-NZ"}
+language_labels = {"English (Australia)": "en-AU", "English (New Zealand)": "en-NZ",
+                   "English": "en", "한국어": "ko", "简体中文": "zh-Hans", "繁體中文": "zh-Hant", "日本語": "ja",
+                   "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es"}
 with st.container(key="qa_language_selector"):
     selected_label = st.selectbox(
         "Language / 언어",
