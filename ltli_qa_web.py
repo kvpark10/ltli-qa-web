@@ -105,6 +105,34 @@ def normalize_ui_language(value):
         return "en"
     return primary if primary in LANGUAGE else "en"
 
+QA_WELCOME = {
+    "en-AU": "We’ll check the fiddly bits, from numbers to tags.",
+    "en-NZ": "Kia ora. We’ll check the little details, from numbers to tags.",
+    "en": "We’ll sweat the small stuff, from numbers to tags.",
+    "ko": "숫자부터 태그까지, 놓치기 쉬운 항목을 살펴봐요.",
+    "zh-Hans": "从数字到标签，容易漏掉的细节交给我们检查。",
+    "zh-Hant": "從數字到標籤，容易漏掉的細節交給我們檢查。",
+    "ja": "数字からタグまで、見落としやすいところをチェックします。",
+    "de": "Von Zahlen bis zu Tags: Wir schauen bei den kleinen Dingen genau hin.",
+    "fr": "Des chiffres aux balises, on garde l’œil sur les petits détails.",
+    "it": "Dai numeri ai tag, teniamo d’occhio i dettagli.",
+    "es": "De los números a las etiquetas, nos fijamos en los pequeños detalles.",
+}
+
+QA_CLEAR = {
+    "en-AU": "All clear. No QA issues found.",
+    "en-NZ": "All clear. No QA issues found.",
+    "en": "All clear. No QA issues found.",
+    "ko": "이번 검사에서는 확인할 항목이 나오지 않았어요.",
+    "zh-Hans": "这次检查没有标出需要复核的问题。",
+    "zh-Hant": "這次檢查沒有標出需要複查的問題。",
+    "ja": "今回のチェックで指摘事項はありませんでした。",
+    "de": "Alles ruhig. Die QA-Prüfung hat keine Auffälligkeiten gefunden.",
+    "fr": "Côté QA, rien à signaler.",
+    "it": "Tutto tranquillo: il controllo QA non ha segnalato problemi.",
+    "es": "Todo en calma: el control de calidad no ha señalado incidencias.",
+}
+
 language_labels = {"English (Australia)": "en-AU", "English (New Zealand)": "en-NZ",
                    "English": "en", "한국어": "ko", "简体中文": "zh-Hans", "繁體中文": "zh-Hant", "日本語": "ja",
                    "Deutsch": "de", "Français": "fr", "Italiano": "it", "Español": "es"}
@@ -221,6 +249,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 st.markdown(
     f'<section class="ltli-hero"><h1>{L("hero_title", "Translation QA")}</h1>'
+    f'<p>{QA_WELCOME[UI_LANGUAGE]}</p>'
     f'<p>{L("hero_text", "Compare numbers, tags, placeholders, and more in the source and translation. Download the findings as an Excel report.")}</p></section>',
     unsafe_allow_html=True,
 )
@@ -852,7 +881,7 @@ if "qa_result_dataframe" in st.session_state:
                 st.markdown(L("review_issues", "#### Issues requiring review"))
                 st.dataframe(localized_results(error_dataframe, WORKBOOK_LOCALE), use_container_width=True, hide_index=True)
             else:
-                st.success(L("no_issues", "No QA issues were found."))
+                st.success(QA_CLEAR[UI_LANGUAGE])
 
             def record_report_download():
                 track_event("report_downloaded", {"report_format": "XLSX", "segment_count": total_segments})
