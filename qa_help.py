@@ -21,6 +21,14 @@ GUIDE = {
         '5. 수정은 원본 파일에서 진행하고 다시 업로드하여 QA를 재실행합니다. 화면에서 직접 편집하는 도구는 아닙니다.',
         '6. Excel 보고서를 다운로드합니다. 자동 검사 통과와 인간 최종 언어 검수는 별개입니다.',
     ]),
+    'ja': ('使い方', [
+        '1. 原文と訳文を含むXLSX、または同じ形式のDOCX・TXTの原文と訳文を用意します。',
+        '2. ファイルをアップロードします。',
+        '3. プレビューで原文と訳文が行ごとに対応しているか確認します。',
+        '4. QAを実行し、確認が必要なセグメントと指摘の種類を確認します。',
+        '5. 元ファイルで修正し、再アップロードしてQAを実行します。',
+        '6. Excelレポートをダウンロードします。最後に人が訳文を確認します。',
+    ]),
     'en': ('How to use', [
         '1. Prepare one bilingual XLSX or a same-format source/target pair of DOCX or TXT files.',
         '2. Upload the files.',
@@ -39,10 +47,37 @@ NOTICES = {
 }
 
 
+HELP_JA = {
+    'xlsx': 'Source列とTarget列をそれぞれ1つ用意し、同じ行に対応する原文と訳文を入力してください。最大10 MBです。',
+    'source': '原文をDOCXまたはTXTで用意し、訳文と同じ形式にしてください。',
+    'target': '原文と同じ形式にし、空でない段落や行の数と順序をそろえてください。',
+    'run': 'アップロード済みのファイルに対してQAを実行します。ファイルを変更した場合は再実行してください。',
+    'report': 'レポートには原文と訳文が含まれます。共有前にご確認ください。',
+    'sample': '架空のデータと意図的な問題を含むテスト用ファイルです。',
+    'template': 'ExcelにはSource列とTarget列を使用し、Wordでは原文と訳文の段落の数と順序をそろえてください。',
+    'total': '今回のQAの対象となったセグメント数です。',
+    'passed': '自動検査で指摘がなかったセグメント数です。',
+    'issues': '指摘が1件以上あったセグメント数です。',
+    'rate': '指摘のないセグメント数を総数で割った割合です。翻訳の正確さを示す点数ではありません。',
+}
+
+NOTICES_JA = {
+    'alignment': 'プレビューで原文と訳文の対応を確認してください。両形式をアップロードした場合、XLSXが優先されます。',
+    'rerun': 'ファイルを変更した場合はQAを再実行してください。',
+    'results': '指摘なしは、自動検査で問題が検出されなかったことを示します。指摘が誤訳を意味するとは限りません。',
+    'summary': '1つのセグメントが複数の指摘の種類に集計されることがあります。',
+    'download': 'レポートには原文と訳文が含まれます。共有前に内容を確認してください。',
+}
+
+
 def help_for(key, language):
+    if language == 'ja':
+        return HELP_JA[key]
     return HELP[key][0 if language == 'ko' else 1]
 
 
 def notice_for(key, language):
+    if language == 'ja':
+        return NOTICES_JA[key]
     return NOTICES[key][0 if language == 'ko' else 1]
 
